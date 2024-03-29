@@ -7,84 +7,117 @@ from tools import *
 import os
 
 
-# Getting maps
-keys = ['60','40','30','20','10']
-maps = dict()
-for i in keys:
-    maps[i]=dict()
-    maps[i]['0'] = get_map_param(i+"/average_final.mrc")
-    maps[i]['1'] = get_map_param(i+"/ref_1/average_final.mrc")
-    maps[i]['2'] = get_map_param(i+"/ref_2/average_final.mrc")
+path = "/media/didymos/Projects/ribosome_tunnels/methionine/"
+os.chdir(path)
 
+######################
+# Bacteria ribosomes #
+######################
+bac_id = ['4ybb','abau','bbur','bsub','cacn','drad','ecoli','efae','fjoh','linn','llac','lmon','mpne','msme','mtub','paer','pura','saur','tthe']
+
+bac_name = ['E.coli','A.baumannii','B.burgdorferi','B.subtilis','C.acnes','D.radiodurans','E.coli','E.faecalis','F.johnsoniae','L.innocua','L.lactis','L.monocytogenes','M.pneumoniae','M.smegmatis','M.tuberculosis','P.aeruginosa','P.urativorans','S,aureus','T.thermophilus']
+
+bac_dict = dict()
+i=0
+for item in bac_id:
+    bac_dict[item] = dict()
+    bac_dict[item]['name'] = bac_name[i]
+    i+=1
+
+################
+# Getting maps #
+################
+
+keys = ['60','40','30','20','10']
+
+for item in bac_id:
+    bac_dict[item]['maps'] = dict()
+    for i in keys:
+        bac_dict[item]['maps'][i] = dict()
+        bac_dict[item]['maps'][i]['0'] = get_map_param(item+'/'+i+"/average_final.mrc")
+        bac_dict[item]['maps'][i]['1'] = get_map_param(item+'/'+i+"/ref_1/average_final.mrc")
+        bac_dict[item]['maps'][i]['2'] = get_map_param(item+'/'+i+"/ref_2/average_final.mrc")
+
+
+#################
+# The main path #
+#################
 
 epsilon = 0.001
 
-# The main path
 # Generating the main path PDB file
-for i in keys:
-    get_main_path(maps[i]['0'],epsilon,i+"/main_path.pdb")
-    get_main_path(maps[i]['1'],epsilon,i+"/ref_1/main_path.pdb")
-    get_main_path(maps[i]['2'],epsilon,i+"/ref_2/main_path.pdb")
+for item in bac_id:
+    for i in keys:
+        get_main_path(bac_dict[item]['maps'][i]['0'],epsilon,item+'/'+i+"/main_path.pdb")
+        get_main_path(bac_dict[item]['maps'][i]['1'],epsilon,item+'/'+i+"/ref_1/main_path.pdb")
+        get_main_path(bac_dict[item]['maps'][i]['2'],epsilon,item+'/'+i+"/ref_2/main_path.pdb")
+
 
 # Reading the main path file
-main_path = dict()
-for i in keys:
-    main_path[i] = dict()
-    main_path[i]['0'] = mda.Universe(i+'/main_path.pdb')
-    main_path[i]['1'] = mda.Universe(i+'/ref_1/main_path.pdb')
-    main_path[i]['2'] = mda.Universe(i+'/ref_2/main_path.pdb')
+for item in bac_id:
+    bac_dict[item]['path'] = dict()
+    for i in keys:
+        bac_dict[item]['path'][i] = dict()
+        bac_dict[item]['path'][i]['0'] = mda.Universe(item+'/'+i+'/main_path.pdb')
+        bac_dict[item]['path'][i]['1'] = mda.Universe(item+'/'+i+'/ref_1/main_path.pdb')
+        bac_dict[item]['path'][i]['2'] = mda.Universe(item+'/'+i+'/ref_2/main_path.pdb')
+
+
 
 # Getting geometry
-geom = dict()
-for i in keys:
-    geom[i] = dict()
-    geom[i]['0'] = geometric_prop(maps[i]['0'],epsilon)
-    geom[i]['1'] = geometric_prop(maps[i]['1'],epsilon)
-    geom[i]['2'] = geometric_prop(maps[i]['2'],epsilon)
+for item in bac_id:
+    bac_dict[item]['geom'] = dict()
+    for i in keys:
+        bac_dict[item]['geom'][i] = dict()
+        bac_dict[item]['geom'][i]['0'] = geometric_prop(bac_dict[item]['maps'][i]['0'],epsilon)
+        bac_dict[item]['geom'][i]['1'] = geometric_prop(bac_dict[item]['maps'][i]['1'],epsilon)
+        bac_dict[item]['geom'][i]['2'] = geometric_prop(bac_dict[item]['maps'][i]['2'],epsilon)
 
 
 # number of atom in the main path
-n = dict()
-for i in keys:
-    n_list = []
-    for ii in main_path[i]:
-        n_list.append(len(geom[i][ii]['z_diam']))
-    n[i] = np.min(n_list)
+for item in bac_id:
+    bac_dict[item]['n'] = dict()
+    for i in keys:
+        n_list = []
+        for ii in bac_dict[item]['path'][i]:
+            n_list.append(len(bac_dict[item]['geom'][i][ii]['z_diam']))
+        bac_dict[item]['n'][i] = np.min(n_list)
 
 
 # Averages and std errors
-geom_avg = dict()
-for i in keys:
-    geom_avg[i] = dict()
-    geom_avg[i]['z_diam'] = np.mean([geom[i]['0']['z_diam'][:n[i]],geom[i]['1']['z_diam'][:n[i]],geom[i]['2']['z_diam'][:n[i]]],0)
-    geom_avg[i]['x_diam'] = np.mean([geom[i]['0']['x_diam'][:n[i]],geom[i]['1']['x_diam'][:n[i]],geom[i]['2']['x_diam'][:n[i]]],0)
-    geom_avg[i]['vol'] = np.mean([geom[i]['0']['vol'][:n[i]],geom[i]['1']['vol'][:n[i]],geom[i]['2']['vol'][:n[i]]],0)
-    geom_avg[i]['asp_rat'] = np.mean([geom[i]['0']['asp_rat'][:n[i]],geom[i]['1']['asp_rat'][:n[i]],geom[i]['2']['asp_rat'][:n[i]]],0)
+for item in bac_id:
+    bac_dict[item]['geom_avg'] = dict()
+    for i in keys:
+        bac_dict[item]['geom_avg'][i] = dict()
+        bac_dict[item]['geom_avg'][i]['z_diam'] = np.mean([bac_dict[item]['geom'][i]['0']['z_diam'][:bac_dict[item]['n'][i]],bac_dict[item]['geom'][i]['1']['z_diam'][:bac_dict[item]['n'][i]],bac_dict[item]['geom'][i]['2']['z_diam'][:bac_dict[item]['n'][i]]],0)
+        bac_dict[item]['geom_avg'][i]['x_diam'] = np.mean([bac_dict[item]['geom'][i]['0']['x_diam'][:bac_dict[item]['n'][i]],bac_dict[item]['geom'][i]['1']['x_diam'][:bac_dict[item]['n'][i]],bac_dict[item]['geom'][i]['2']['x_diam'][:bac_dict[item]['n'][i]]],0)
+        bac_dict[item]['geom_avg'][i]['vol'] = np.mean([bac_dict[item]['geom'][i]['0']['vol'][:bac_dict[item]['n'][i]],bac_dict[item]['geom'][i]['1']['vol'][:bac_dict[item]['n'][i]],bac_dict[item]['geom'][i]['2']['vol'][:bac_dict[item]['n'][i]]],0)
+        bac_dict[item]['geom_avg'][i]['asp_rat'] = np.mean([bac_dict[item]['geom'][i]['0']['asp_rat'][:bac_dict[item]['n'][i]],bac_dict[item]['geom'][i]['1']['asp_rat'][:bac_dict[item]['n'][i]],bac_dict[item]['geom'][i]['2']['asp_rat'][:bac_dict[item]['n'][i]]],0)
 
 
-geom_std = dict()
-for i in keys:
-    geom_std[i] = dict()
-    geom_std[i]['z_diam'] = np.std([geom[i]['0']['z_diam'][:n[i]],geom[i]['1']['z_diam'][:n[i]],geom[i]['2']['z_diam'][:n[i]]],0)
-    geom_std[i]['x_diam'] = np.std([geom[i]['0']['x_diam'][:n[i]],geom[i]['1']['x_diam'][:n[i]],geom[i]['2']['x_diam'][:n[i]]],0)
-    geom_std[i]['vol'] = np.std([geom[i]['0']['vol'][:n[i]],geom[i]['1']['vol'][:n[i]],geom[i]['2']['vol'][:n[i]]],0)
-    geom_std[i]['asp_rat'] = np.std([geom[i]['0']['asp_rat'][:n[i]],geom[i]['1']['asp_rat'][:n[i]],geom[i]['2']['asp_rat'][:n[i]]],0)
+for item in bac_id:
+    bac_dict[item]['geom_std'] = dict()
+    for i in keys:
+        bac_dict[item]['geom_std'][i] = dict()
+        bac_dict[item]['geom_std'][i]['z_diam'] = np.std([bac_dict[item]['geom'][i]['0']['z_diam'][:bac_dict[item]['n'][i]],bac_dict[item]['geom'][i]['1']['z_diam'][:bac_dict[item]['n'][i]],bac_dict[item]['geom'][i]['2']['z_diam'][:bac_dict[item]['n'][i]]],0)
+        bac_dict[item]['geom_std'][i]['x_diam'] = np.std([bac_dict[item]['geom'][i]['0']['x_diam'][:bac_dict[item]['n'][i]],bac_dict[item]['geom'][i]['1']['x_diam'][:bac_dict[item]['n'][i]],bac_dict[item]['geom'][i]['2']['x_diam'][:bac_dict[item]['n'][i]]],0)
+        bac_dict[item]['geom_std'][i]['vol'] = np.std([bac_dict[item]['geom'][i]['0']['vol'][:bac_dict[item]['n'][i]],bac_dict[item]['geom'][i]['1']['vol'][:bac_dict[item]['n'][i]],bac_dict[item]['geom'][i]['2']['vol'][:bac_dict[item]['n'][i]]],0)
+        bac_dict[item]['geom_std'][i]['asp_rat'] = np.std([bac_dict[item]['geom'][i]['0']['asp_rat'][:bac_dict[item]['n'][i]],bac_dict[item]['geom'][i]['1']['asp_rat'][:bac_dict[item]['n'][i]],bac_dict[item]['geom'][i]['2']['asp_rat'][:bac_dict[item]['n'][i]]],0)
 
 
 # RMSD
-rmsd = dict()
-for i in keys:
-    rmsd[i] = []
-    rmsd[i].append(np.sqrt(np.sum((main_path[i]['0'].atoms.positions[:n[i]]-main_path[i]['1'].atoms.positions[:n[i]])**2,1)))
-    rmsd[i].append(np.sqrt(np.sum((main_path[i]['0'].atoms.positions[:n[i]]-main_path[i]['2'].atoms.positions[:n[i]])**2,1)))
-    rmsd[i].append(np.sqrt(np.sum((main_path[i]['1'].atoms.positions[:n[i]]-main_path[i]['2'].atoms.positions[:n[i]])**2,1)))
-    rmsd[i] = np.array(rmsd[i])
+for item in bac_id:
+    bac_dict[item]['rmsd_avg'] = dict()
+    bac_dict[item]['rmsd_std'] = dict()
+    rmsd = dict()
+    for i in keys:
+        rmsd[i] = []
+        rmsd[i].append(np.sqrt(np.sum((bac_dict[item]['path'][i]['0'].atoms.positions[:bac_dict[item]['n'][i]]-bac_dict[item]['path'][i]['1'].atoms.positions[:bac_dict[item]['n'][i]])**2,1)))
+        rmsd[i].append(np.sqrt(np.sum((bac_dict[item]['path'][i]['0'].atoms.positions[:bac_dict[item]['n'][i]]-bac_dict[item]['path'][i]['2'].atoms.positions[:bac_dict[item]['n'][i]])**2,1)))
+        rmsd[i].append(np.sqrt(np.sum((bac_dict[item]['path'][i]['1'].atoms.positions[:bac_dict[item]['n'][i]]-bac_dict[item]['path'][i]['2'].atoms.positions[:bac_dict[item]['n'][i]])**2,1)))
+        bac_dict[item]['rmsd_avg'][i] = np.mean(np.array(rmsd[i]),0)
+        bac_dict[item]['rmsd_std'][i] = np.std(np.array(rmsd[i]),0)
 
-rmsd_avg = dict()
-rmsd_std = dict()
-for i in keys:
-    rmsd_avg[i] = np.mean(rmsd[i],0)
-    rmsd_std[i] = np.std(rmsd[i],0)
 
 ############
 # Plotting #

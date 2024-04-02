@@ -124,9 +124,9 @@ for item in bac_id:
 ############
 kolors = ['C0','C1','C2','C3','C4']
 
-###########################
-### RMSD idependent plots #
-###########################
+##################
+### Pathway RMSD #
+##################
 for item in bac_id:
     j=0
     for i in keys:
@@ -146,9 +146,9 @@ for item in bac_id:
     plt.savefig(item+'/rmsd_plot.svg', format='svg')
     plt.close()
 
-####################
-# RMSD in one plot #
-####################
+############################
+# Pathways RMSD - ONE PLOT #
+############################
 plt.figure(figsize=(28,28))
 plt.tight_layout()
 k=1
@@ -176,9 +176,9 @@ for item in bac_id:
 plt.savefig('rmsd_plot.svg', format='svg')
 plt.close()
 
-############################
-# Volume independent plots #
-############################
+##########
+# Volume #
+##########
 for item in bac_id:
     j=0
     for i in keys:
@@ -198,7 +198,7 @@ for item in bac_id:
     plt.close()
 
 ######################
-# Volume in one plot #
+# Volume - ONE PLOT #
 ######################
 plt.figure(figsize=(28,28))
 plt.tight_layout()
@@ -207,7 +207,7 @@ for item in bac_id:
     j=0
     plt.subplot(5,4,k)
     for i in keys:
-        plt.errorbar(np.arange(0,len(bac_dict[item]['geom'][i]['0']['z_diam'][:bac_dict[item]['n'][i]]))*bac_dict[item]['maps'][i]['0']['vox'],bac_dict[item]['geom_avg'][i]['vol'],yerr = bac_dict[item]['geom_std'][i]['vol'],lw=2,label=i+' aa')
+        plt.errorbar(np.arange(0,len(bac_dict[item]['geom'][i]['0']['z_diam'][:bac_dict[item]['geom'][i]]))*bac_dict[item]['maps'][i]['0']['vox'],bac_dict[item]['geom_avg'][i]['vol'],yerr = bac_dict[item]['geom_std'][i]['vol'],lw=2,label=i+' aa')
         plt.plot(np.arange(0,len(bac_dict[item]['geom'][i]['0']['z_diam'][:bac_dict[item]['n'][i]]))*bac_dict[item]['maps'][i]['0']['vox'],bac_dict[item]['geom'][i]['0']['vol'][:bac_dict[item]['n'][i]],lw=2,color=kolors[j],alpha=0.3)
         plt.plot(np.arange(0,len(bac_dict[item]['geom'][i]['1']['z_diam'][:bac_dict[item]['n'][i]]))*bac_dict[item]['maps'][i]['1']['vox'],bac_dict[item]['geom'][i]['1']['vol'][:bac_dict[item]['n'][i]],lw=2,color=kolors[j],alpha=0.3)
         plt.plot(np.arange(0,len(bac_dict[item]['geom'][i]['2']['z_diam'][:bac_dict[item]['n'][i]]))*bac_dict[item]['maps'][i]['2']['vox'],bac_dict[item]['geom'][i]['2']['vol'][:bac_dict[item]['n'][i]],lw=2,color=kolors[j],alpha=0.3)
@@ -227,58 +227,132 @@ for item in bac_id:
 plt.savefig('volume_plot.svg', format='svg')
 plt.close()
 
-### Distance from Axis
-plt.figure(figsize=(16,4))
-plt.subplot(1,2,1)
-j=0
-for i in keys:
-    plt.errorbar(np.arange(0,len(geom[i]['0']['x_diam'][:n[i]]))*maps[i]['0']['vox'],geom_avg[i]['x_diam'],yerr = geom_std[i]['x_diam'],lw=2,label=i+' aa')
-    plt.plot(np.arange(0,len(geom[i]['0']['x_diam'][:n[i]]))*maps[i]['0']['vox'],geom[i]['0']['x_diam'][:n[i]],lw=2,color=kolors[j],alpha=0.3)
-    plt.plot(np.arange(0,len(geom[i]['1']['x_diam'][:n[i]]))*maps[i]['1']['vox'],geom[i]['1']['x_diam'][:n[i]],lw=2,color=kolors[j],alpha=0.3)
-    plt.plot(np.arange(0,len(geom[i]['2']['x_diam'][:n[i]]))*maps[i]['2']['vox'],geom[i]['2']['x_diam'][:n[i]],lw=2,color=kolors[j],alpha=0.3)
-    j+=1
+############################
+# Distance from the X-Axis #
+############################
+for item in bac_id:
+    j=0
+    for i in keys:
+        plt.errorbar(np.arange(0,len(bac_dict[item]['geom'][i]['0']['x_diam'][:bac_dict[item]['n'][i]]))*bac_dict[item]['maps'][i]['0']['vox'],bac_dict[item]['geom_avg'][i]['x_diam'],yerr = bac_dict[item]['geom_std'][i]['x_diam'],lw=2,label=i+' aa')
+        plt.plot(np.arange(0,len(bac_dict[item]['geom'][i]['0']['x_diam'][:bac_dict[item]['n'][i]]))*bac_dict[item]['maps'][i]['0']['vox'],bac_dict[item]['geom'][i]['0']['x_diam'][:bac_dict[item]['n'][i]],lw=2,color=kolors[j],alpha=0.3)
+        plt.plot(np.arange(0,len(bac_dict[item]['geom'][i]['1']['x_diam'][:bac_dict[item]['n'][i]]))*bac_dict[item]['maps'][i]['1']['vox'],bac_dict[item]['geom'][i]['1']['x_diam'][:bac_dict[item]['n'][i]],lw=2,color=kolors[j],alpha=0.3)
+        plt.plot(np.arange(0,len(bac_dict[item]['geom'][i]['2']['x_diam'][:bac_dict[item]['n'][i]]))*bac_dict[item]['maps'][i]['2']['vox'],bac_dict[item]['geom'][i]['2']['x_diam'][:bac_dict[item]['n'][i]],lw=2,color=kolors[j],alpha=0.3)
+        j+=1
+    plt.legend()
+    plt.xlabel("Distance from the PTC along the Y-axis [A]")
+    plt.ylabel("Distance from the main path along the X-axis [A]")
+    plt.xlim(0,120)
+    plt.ylim(0,60)
+    plt.title(bac_dict[item]['name'])
+    plt.savefig(item+'/x-plot.svg', format='svg')
+    plt.close()
 
-plt.legend()
-plt.xlabel("Distance from the PTC along the Y-axis [A]")
-plt.ylabel("Distance from the main path along the X-axis [A]")
-plt.xlim(0,120)
-plt.ylim(0,60)
-plt.title(title+" "+"X-axis")
 
-plt.subplot(1,2,2)
-j=0
-for i in keys:
-    plt.errorbar(np.arange(0,len(geom[i]['0']['z_diam'][:n[i]]))*maps[i]['0']['vox'],geom_avg[i]['z_diam'],yerr = geom_std[i]['z_diam'],lw=2,label=i+' aa')
-    plt.plot(np.arange(0,len(geom[i]['0']['z_diam'][:n[i]]))*maps[i]['0']['vox'],geom[i]['0']['z_diam'][:n[i]],lw=2,color=kolors[j],alpha=0.3)
-    plt.plot(np.arange(0,len(geom[i]['1']['z_diam'][:n[i]]))*maps[i]['1']['vox'],geom[i]['1']['z_diam'][:n[i]],lw=2,color=kolors[j],alpha=0.3)
-    plt.plot(np.arange(0,len(geom[i]['2']['z_diam'][:n[i]]))*maps[i]['2']['vox'],geom[i]['2']['z_diam'][:n[i]],lw=2,color=kolors[j],alpha=0.3)
-    j+=1
+#######################################
+# Distance from the X-Axis - ONE PLOT #
+#######################################
 
-plt.legend()
-plt.xlabel("Distance from the PTC along the Y-axis [A]")
-plt.ylabel("Distance from the main path along the Z-axis [A]")
-plt.xlim(0,120)
-plt.ylim(0,60)
-plt.title(title+" "+"Z-axis")
-plt.savefig('axis_plot.svg', format='svg')
-plt.close()
+plt.figure(figsize=(28,28))
+plt.tight_layout()
+k=1
+for item in bac_id:
+    j=0
+    plt.subplot(5,4,k)
+    for i in keys:
+        plt.errorbar(np.arange(0,len(bac_dict[item]['geom'][i]['0']['x_diam'][:bac_dict[item]['n'][i]]))*bac_dict[item]['maps'][i]['0']['vox'],bac_dict[item]['geom_avg'][i]['x_diam'],yerr = bac_dict[item]['geom_std'][i]['x_diam'],lw=2,label=i+' aa')
+        plt.plot(np.arange(0,len(bac_dict[item]['geom'][i]['0']['x_diam'][:bac_dict[item]['n'][i]]))*bac_dict[item]['maps'][i]['0']['vox'],bac_dict[item]['geom'][i]['0']['x_diam'][:bac_dict[item]['n'][i]],lw=2,color=kolors[j],alpha=0.3)
+        plt.plot(np.arange(0,len(bac_dict[item]['geom'][i]['1']['x_diam'][:bac_dict[item]['n'][i]]))*bac_dict[item]['maps'][i]['1']['vox'],bac_dict[item]['geom'][i]['1']['x_diam'][:bac_dict[item]['n'][i]],lw=2,color=kolors[j],alpha=0.3)
+        plt.plot(np.arange(0,len(bac_dict[item]['geom'][i]['2']['x_diam'][:bac_dict[item]['n'][i]]))*bac_dict[item]['maps'][i]['2']['vox'],bac_dict[item]['geom'][i]['2']['x_diam'][:bac_dict[item]['n'][i]],lw=2,color=kolors[j],alpha=0.3)
+        j+=1
+    if (item=='4ybb'):plt.legend(fontsize=14)
+    plt.xlabel("Distance from the PTC along the Y-axis [A]",fontsize=14)
+    plt.ylabel("Distance from the main path along the X-axis [A]",fontsize=14)
+    plt.xlim(0,120)
+    plt.ylim(0,65)
+    if (item=='4ybb'):
+        plt.title('E.coli - X-ray',fontsize=18)
+    else:
+        plt.title(bac_dict[item]['name'],fontsize=18)
+    k+=1
 
-# Aspect ratio plot
-j=0
-for i in keys:
-    plt.errorbar(np.arange(0,len(geom[i]['0']['z_diam'][:n[i]]))*maps[i]['0']['vox'],geom_avg[i]['asp_rat'],yerr = geom_std[i]['asp_rat'],lw=2,label=i+' aa')
-    plt.plot(np.arange(0,len(geom[i]['0']['z_diam'][:n[i]]))*maps[i]['0']['vox'],geom[i]['0']['asp_rat'][:n[i]],lw=2,color=kolors[j],alpha=0.3)
-    plt.plot(np.arange(0,len(geom[i]['1']['z_diam'][:n[i]]))*maps[i]['1']['vox'],geom[i]['1']['asp_rat'][:n[i]],lw=2,color=kolors[j],alpha=0.3)
-    plt.plot(np.arange(0,len(geom[i]['2']['z_diam'][:n[i]]))*maps[i]['2']['vox'],geom[i]['2']['asp_rat'][:n[i]],lw=2,color=kolors[j],alpha=0.3)
-    j+=1
-
-plt.xlabel("Distance from the PTC [A]")
-plt.ylabel("Aspect ratio X/Z dimension")
-plt.axhline(y=1.0, color='black',ls='--')
-plt.xlim(0,120)
-plt.ylim(0.25,3.0)
-plt.title(title)
-plt.legend()
 # Save the figure as an SVG file
-plt.savefig('aspect_ratio_plot.svg', format='svg')
+plt.savefig('x-plot.svg', format='svg')
 plt.close()
+
+
+
+
+
+############################
+# Distance from the Z-Axis #
+############################
+for item in bac_id:
+    j=0
+    for i in keys:
+        plt.errorbar(np.arange(0,len(bac_dict[item]['geom'][i]['0']['z_diam'][:bac_dict[item]['n'][i]]))*bac_dict[item]['maps'][i]['0']['vox'],bac_dict[item]['geom_avg'][i]['z_diam'],yerr = bac_dict[item]['geom_std'][i]['z_diam'],lw=2,label=i+' aa')
+        plt.plot(np.arange(0,len(bac_dict[item]['geom'][i]['0']['z_diam'][:bac_dict[item]['n'][i]]))*bac_dict[item]['maps'][i]['0']['vox'],bac_dict[item]['geom'][i]['0']['z_diam'][:bac_dict[item]['n'][i]],lw=2,color=kolors[j],alpha=0.3)
+        plt.plot(np.arange(0,len(bac_dict[item]['geom'][i]['1']['z_diam'][:bac_dict[item]['n'][i]]))*bac_dict[item]['maps'][i]['1']['vox'],bac_dict[item]['geom'][i]['1']['z_diam'][:bac_dict[item]['n'][i]],lw=2,color=kolors[j],alpha=0.3)
+        plt.plot(np.arange(0,len(bac_dict[item]['geom'][i]['2']['z_diam'][:bac_dict[item]['n'][i]]))*bac_dict[item]['maps'][i]['2']['vox'],bac_dict[item]['geom'][i]['2']['z_diam'][:bac_dict[item]['n'][i]],lw=2,color=kolors[j],alpha=0.3)
+        j+=1
+    plt.legend()
+    plt.xlabel("Distance from the PTC along the Y-axis [A]")
+    plt.ylabel("Distance from the main path along the Z-axis [A]")
+    plt.xlim(0,120)
+    plt.ylim(0,60)
+    plt.title(bac_dict[item]['name'])
+    plt.savefig(item+'/z-plot.svg', format='svg')
+    plt.close()
+
+
+#######################################
+# Distance from the Z-Axis - ONE PLOT #
+#######################################
+
+plt.figure(figsize=(28,28))
+plt.tight_layout()
+k=1
+for item in bac_id:
+    j=0
+    plt.subplot(5,4,k)
+    for i in keys:
+        plt.errorbar(np.arange(0,len(bac_dict[item]['geom'][i]['0']['z_diam'][:bac_dict[item]['n'][i]]))*bac_dict[item]['maps'][i]['0']['vox'],bac_dict[item]['geom_avg'][i]['z_diam'],yerr = bac_dict[item]['geom_std'][i]['z_diam'],lw=2,label=i+' aa')
+        plt.plot(np.arange(0,len(bac_dict[item]['geom'][i]['0']['z_diam'][:bac_dict[item]['n'][i]]))*bac_dict[item]['maps'][i]['0']['vox'],bac_dict[item]['geom'][i]['0']['z_diam'][:bac_dict[item]['n'][i]],lw=2,color=kolors[j],alpha=0.3)
+        plt.plot(np.arange(0,len(bac_dict[item]['geom'][i]['1']['z_diam'][:bac_dict[item]['n'][i]]))*bac_dict[item]['maps'][i]['1']['vox'],bac_dict[item]['geom'][i]['1']['z_diam'][:bac_dict[item]['n'][i]],lw=2,color=kolors[j],alpha=0.3)
+        plt.plot(np.arange(0,len(bac_dict[item]['geom'][i]['2']['z_diam'][:bac_dict[item]['n'][i]]))*bac_dict[item]['maps'][i]['2']['vox'],bac_dict[item]['geom'][i]['2']['z_diam'][:bac_dict[item]['n'][i]],lw=2,color=kolors[j],alpha=0.3)
+        j+=1
+    if (item=='4ybb'):plt.legend(fontsize=14)
+    plt.xlabel("Distance from the PTC along the Y-axis [A]",fontsize=14)
+    plt.ylabel("Distance from the main path along the Z-axis [A]",fontsize=14)
+    plt.xlim(0,120)
+    plt.ylim(0,65)
+    if (item=='4ybb'):
+        plt.title('E.coli - X-ray',fontsize=18)
+    else:
+        plt.title(bac_dict[item]['name'],fontsize=18)
+    k+=1
+
+# Save the figure as an SVG file
+plt.savefig('z-plot.svg', format='svg')
+plt.close()
+
+#####################
+# Aspect ratio plot #
+#####################
+for item in bac_id:
+    j=0
+    for i in keys:
+        plt.errorbar(np.arange(0,len(bac_dict[item]['geom'][i]['0']['z_diam'][:bac_dict[item]['n'][i]]))*maps[i]['0']['vox'],geom_avg[i]['asp_rat'],yerr = geom_std[i]['asp_rat'],lw=2,label=i+' aa')
+        plt.plot(np.arange(0,len(bac_dict[item]['geom'][i]['0']['z_diam'][:bac_dict[item]['n'][i]]))*maps[i]['0']['vox'],geom[i]['0']['asp_rat'][:bac_dict[item]['n'][i]],lw=2,color=kolors[j],alpha=0.3)
+        plt.plot(np.arange(0,len(bac_dict[item]['geom'][i]['1']['z_diam'][:bac_dict[item]['n'][i]]))*maps[i]['1']['vox'],geom[i]['1']['asp_rat'][:bac_dict[item]['n'][i]],lw=2,color=kolors[j],alpha=0.3)
+        plt.plot(np.arange(0,len(bac_dict[item]['geom'][i]['2']['z_diam'][:bac_dict[item]['n'][i]]))*maps[i]['2']['vox'],geom[i]['2']['asp_rat'][:bac_dict[item]['n'][i]],lw=2,color=kolors[j],alpha=0.3)
+        j+=1
+    plt.xlabel("Distance from the PTC [A]")
+    plt.ylabel("Aspect ratio X/Z dimension")
+    plt.axhline(y=1.0, color='black',ls='--')
+    plt.xlim(0,120)
+    plt.ylim(0.25,3.0)
+    plt.title(title)
+    plt.legend()
+    # Save the figure as an SVG file
+    plt.savefig(item+'/aspect_ratio_plot.svg', format='svg')
+    plt.close()

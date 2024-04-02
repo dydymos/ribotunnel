@@ -33,6 +33,7 @@ def get_main_path(map_param,epsilon,output):
             indx+=1
     file.close()
 
+
 # Function that derives the most basic geometric properties of the exit tunnel
 def geometric_prop(map_param,epsilon):
     geometry = dict()

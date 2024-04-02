@@ -197,6 +197,8 @@ for item in bac_id:
     plt.savefig(item+'/volume_plot.svg', format='svg')
     plt.close()
 
+
+
 ######################
 # Volume - ONE PLOT #
 ######################
@@ -222,6 +224,32 @@ for item in bac_id:
     else:
         plt.title(bac_dict[item]['name'],fontsize=18)
     k+=1
+
+# Save the figure as an SVG file
+plt.savefig('volume_plot.svg', format='svg')
+plt.close()
+
+
+###################
+# Volume - LENGTH #
+###################
+plt.figure(figsize=(28,28))
+plt.tight_layout()
+k=5
+j=0
+for i in keys:
+    plt.subplot(3,2,k)
+    for item in bac_id:
+        plt.plot(np.arange(0,len(bac_dict[item]['geom'][i]['0']['z_diam'][:bac_dict[item]['n'][i]]))*bac_dict[item]['maps'][i]['0']['vox'],bac_dict[item]['geom'][i]['0']['vol'][:bac_dict[item]['n'][i]],lw=2,color=kolors[j],alpha=0.3)
+        plt.plot(np.arange(0,len(bac_dict[item]['geom'][i]['1']['z_diam'][:bac_dict[item]['n'][i]]))*bac_dict[item]['maps'][i]['1']['vox'],bac_dict[item]['geom'][i]['1']['vol'][:bac_dict[item]['n'][i]],lw=2,color=kolors[j],alpha=0.3)
+        plt.plot(np.arange(0,len(bac_dict[item]['geom'][i]['2']['z_diam'][:bac_dict[item]['n'][i]]))*bac_dict[item]['maps'][i]['2']['vox'],bac_dict[item]['geom'][i]['2']['vol'][:bac_dict[item]['n'][i]],lw=2,color=kolors[j],alpha=0.3)
+    plt.xlabel("Distance from the PTC along the Y-axis [A]",fontsize=14)
+    plt.ylabel("Volume of the section of the exit tunne [$A^3$]",fontsize=14)
+    plt.xlim(0,120)
+    plt.ylim(0,2500)
+    k-=1
+    j+=1
+
 
 # Save the figure as an SVG file
 plt.savefig('volume_plot.svg', format='svg')
@@ -341,18 +369,71 @@ plt.close()
 for item in bac_id:
     j=0
     for i in keys:
-        plt.errorbar(np.arange(0,len(bac_dict[item]['geom'][i]['0']['z_diam'][:bac_dict[item]['n'][i]]))*maps[i]['0']['vox'],geom_avg[i]['asp_rat'],yerr = geom_std[i]['asp_rat'],lw=2,label=i+' aa')
-        plt.plot(np.arange(0,len(bac_dict[item]['geom'][i]['0']['z_diam'][:bac_dict[item]['n'][i]]))*maps[i]['0']['vox'],geom[i]['0']['asp_rat'][:bac_dict[item]['n'][i]],lw=2,color=kolors[j],alpha=0.3)
-        plt.plot(np.arange(0,len(bac_dict[item]['geom'][i]['1']['z_diam'][:bac_dict[item]['n'][i]]))*maps[i]['1']['vox'],geom[i]['1']['asp_rat'][:bac_dict[item]['n'][i]],lw=2,color=kolors[j],alpha=0.3)
-        plt.plot(np.arange(0,len(bac_dict[item]['geom'][i]['2']['z_diam'][:bac_dict[item]['n'][i]]))*maps[i]['2']['vox'],geom[i]['2']['asp_rat'][:bac_dict[item]['n'][i]],lw=2,color=kolors[j],alpha=0.3)
+        plt.errorbar(np.arange(0,len(bac_dict[item]['geom'][i]['0']['z_diam'][:bac_dict[item]['n'][i]]))*bac_dict[item]['maps'][i]['0']['vox'],bac_dict[item]['geom_avg'][i]['asp_rat'],yerr = bac_dict[item]['geom_std'][i]['asp_rat'],lw=2,label=i+' aa')
+        plt.plot(np.arange(0,len(bac_dict[item]['geom'][i]['0']['z_diam'][:bac_dict[item]['n'][i]]))*bac_dict[item]['maps'][i]['0']['vox'],bac_dict[item]['geom'][i]['0']['asp_rat'][:bac_dict[item]['n'][i]],lw=2,color=kolors[j],alpha=0.3)
+        plt.plot(np.arange(0,len(bac_dict[item]['geom'][i]['1']['z_diam'][:bac_dict[item]['n'][i]]))*bac_dict[item]['maps'][i]['1']['vox'],bac_dict[item]['geom'][i]['1']['asp_rat'][:bac_dict[item]['n'][i]],lw=2,color=kolors[j],alpha=0.3)
+        plt.plot(np.arange(0,len(bac_dict[item]['geom'][i]['2']['z_diam'][:bac_dict[item]['n'][i]]))*bac_dict[item]['maps'][i]['2']['vox'],bac_dict[item]['geom'][i]['2']['asp_rat'][:bac_dict[item]['n'][i]],lw=2,color=kolors[j],alpha=0.3)
         j+=1
     plt.xlabel("Distance from the PTC [A]")
     plt.ylabel("Aspect ratio X/Z dimension")
     plt.axhline(y=1.0, color='black',ls='--')
     plt.xlim(0,120)
     plt.ylim(0.25,3.0)
-    plt.title(title)
+    plt.title(bac_dict[item]['name'])
     plt.legend()
     # Save the figure as an SVG file
     plt.savefig(item+'/aspect_ratio_plot.svg', format='svg')
     plt.close()
+
+
+################################
+# Aspect ratio plot - ONE PLOT #
+################################
+plt.figure(figsize=(28,28))
+plt.tight_layout()
+k=1
+for item in bac_id:
+    plt.subplot(5,4,k)
+    j=0
+    for i in keys:
+        plt.errorbar(np.arange(0,len(bac_dict[item]['geom'][i]['0']['z_diam'][:bac_dict[item]['n'][i]]))*bac_dict[item]['maps'][i]['0']['vox'],bac_dict[item]['geom_avg'][i]['asp_rat'],yerr = bac_dict[item]['geom_std'][i]['asp_rat'],lw=2,label=i+' aa')
+        plt.plot(np.arange(0,len(bac_dict[item]['geom'][i]['0']['z_diam'][:bac_dict[item]['n'][i]]))*bac_dict[item]['maps'][i]['0']['vox'],bac_dict[item]['geom'][i]['0']['asp_rat'][:bac_dict[item]['n'][i]],lw=2,color=kolors[j],alpha=0.3)
+        plt.plot(np.arange(0,len(bac_dict[item]['geom'][i]['1']['z_diam'][:bac_dict[item]['n'][i]]))*bac_dict[item]['maps'][i]['1']['vox'],bac_dict[item]['geom'][i]['1']['asp_rat'][:bac_dict[item]['n'][i]],lw=2,color=kolors[j],alpha=0.3)
+        plt.plot(np.arange(0,len(bac_dict[item]['geom'][i]['2']['z_diam'][:bac_dict[item]['n'][i]]))*bac_dict[item]['maps'][i]['2']['vox'],bac_dict[item]['geom'][i]['2']['asp_rat'][:bac_dict[item]['n'][i]],lw=2,color=kolors[j],alpha=0.3)
+        j+=1
+    plt.xlabel("Distance from the PTC [A]",fontsize=14)
+    plt.ylabel("Aspect ratio X/Z dimension",fontsize=14)
+    plt.axhline(y=1.0, color='black',ls='--')
+    plt.xlim(0,120)
+    plt.ylim(0.25,3.0)
+    if (item=='4ybb'):
+        plt.title('E.coli - X-ray',fontsize=18)
+    else:
+        plt.title(bac_dict[item]['name'],fontsize=18)
+    if (item=='4ybb'):plt.legend(fontsize=14)
+    k+=1
+
+# Save the figure as an SVG file
+plt.savefig('aspect_ratio_plot.svg', format='svg')
+plt.close()
+
+
+
+# Correlation between maps
+id0 = np.where(bac_dict['ecoli']['maps']['40']['0']['data']>epsilon)
+id1 = np.where(bac_dict['ecoli']['maps']['40']['1']['data']>epsilon)
+id2 = np.where(bac_dict['ecoli']['maps']['40']['2']['data']>epsilon)
+set_id0 = set(zip(id0[0], id0[1], id0[2]))
+set_id1 = set(zip(id1[0], id1[1], id1[2]))
+set_id2 = set(zip(id2[0], id2[1], id2[2]))
+common_id0_id1 = len(set_id0.intersection(set_id1))
+common_id0_id2 = len(set_id0.intersection(set_id2))
+common_id1_id2 = len(set_id1.intersection(set_id2))
+cc_matrix=np.ones([3,3])
+cc_matrix[0,1] = common_id0_id1/len(set_id0)
+cc_matrix[0,2] = common_id0_id2/len(set_id0)
+cc_matrix[1,0] = common_id0_id1/len(set_id1)
+cc_matrix[2,0] = common_id0_id2/len(set_id2)
+cc_matrix[1,2] = common_id1_id2/len(set_id1)
+cc_matrix[2,1] = common_id1_id2/len(set_id2)
+plt.imshow(cc_matrix,cmap='coolwarm_r')

@@ -15,7 +15,7 @@ os.chdir(path)
 ######################
 bac_id = ['4ybb','abau','bbur','bsub','cacn','drad','ecoli','efae','fjoh','linn','llac','lmon','mpne','msme','mtub','paer','pura','saur','tthe']
 
-bac_name = ['E.coli','A.baumannii','B.burgdorferi','B.subtilis','C.acnes','D.radiodurans','E.coli','E.faecalis','F.johnsoniae','L.innocua','L.lactis','L.monocytogenes','M.pneumoniae','M.smegmatis','M.tuberculosis','P.aeruginosa','P.urativorans','S,aureus','T.thermophilus']
+bac_name = ['E.coli','A.baumannii','B.burgdorferi','B.subtilis','C.acnes','D.radiodurans','E.coli','E.faecalis','F.johnsoniae','L.innocua','L.lactis','L.monocytogenes','M.pneumoniae','M.smegmatis','M.tuberculosis','P.aeruginosa','P.urativorans','S.aureus','T.thermophilus']
 
 bac_dict = dict()
 i=0
@@ -109,14 +109,14 @@ for item in bac_id:
 for item in bac_id:
     bac_dict[item]['rmsd_avg'] = dict()
     bac_dict[item]['rmsd_std'] = dict()
-    rmsd = dict()
+    bac_dict[item]['rmsd'] = dict()
     for i in keys:
-        rmsd[i] = []
-        rmsd[i].append(np.sqrt(np.sum((bac_dict[item]['path'][i]['0'].atoms.positions[:bac_dict[item]['n'][i]]-bac_dict[item]['path'][i]['1'].atoms.positions[:bac_dict[item]['n'][i]])**2,1)))
-        rmsd[i].append(np.sqrt(np.sum((bac_dict[item]['path'][i]['0'].atoms.positions[:bac_dict[item]['n'][i]]-bac_dict[item]['path'][i]['2'].atoms.positions[:bac_dict[item]['n'][i]])**2,1)))
-        rmsd[i].append(np.sqrt(np.sum((bac_dict[item]['path'][i]['1'].atoms.positions[:bac_dict[item]['n'][i]]-bac_dict[item]['path'][i]['2'].atoms.positions[:bac_dict[item]['n'][i]])**2,1)))
-        bac_dict[item]['rmsd_avg'][i] = np.mean(np.array(rmsd[i]),0)
-        bac_dict[item]['rmsd_std'][i] = np.std(np.array(rmsd[i]),0)
+        bac_dict[item]['rmsd'][i] = []
+        bac_dict[item]['rmsd'][i].append(np.sqrt(np.sum((bac_dict[item]['path'][i]['0'].atoms.positions[:bac_dict[item]['n'][i]]-bac_dict[item]['path'][i]['1'].atoms.positions[:bac_dict[item]['n'][i]])**2,1)))
+        bac_dict[item]['rmsd'][i].append(np.sqrt(np.sum((bac_dict[item]['path'][i]['0'].atoms.positions[:bac_dict[item]['n'][i]]-bac_dict[item]['path'][i]['2'].atoms.positions[:bac_dict[item]['n'][i]])**2,1)))
+        bac_dict[item]['rmsd'][i].append(np.sqrt(np.sum((bac_dict[item]['path'][i]['1'].atoms.positions[:bac_dict[item]['n'][i]]-bac_dict[item]['path'][i]['2'].atoms.positions[:bac_dict[item]['n'][i]])**2,1)))
+        bac_dict[item]['rmsd_avg'][i] = np.mean(np.array(bac_dict[item]['rmsd'][i]),0)
+        bac_dict[item]['rmsd_std'][i] = np.std(np.array(bac_dict[item]['rmsd'][i]),0)
 
 
 ############
@@ -124,25 +124,58 @@ for item in bac_id:
 ############
 kolors = ['C0','C1','C2','C3','C4']
 
-### RMSD
-j=0
-for i in keys:
-    plt.errorbar(np.arange(0,len(geom[i]['0']['x_diam'][:n[i]]))*maps[i]['0']['vox'],rmsd_avg[i],yerr=rmsd_std[i],lw=2,label=i+" aa")
-    plt.plot(np.arange(0,len(geom[i]['0']['x_diam'][:n[i]]))*maps[i]['0']['vox'],rmsd[i][0][:n[i]],lw=2,color=kolors[j],alpha=0.3)
-    plt.plot(np.arange(0,len(geom[i]['1']['x_diam'][:n[i]]))*maps[i]['1']['vox'],rmsd[i][1][:n[i]],lw=2,color=kolors[j],alpha=0.3)
-    plt.plot(np.arange(0,len(geom[i]['2']['x_diam'][:n[i]]))*maps[i]['2']['vox'],rmsd[i][2][:n[i]],lw=2,color=kolors[j],alpha=0.3)
-    j+=1
+#######################
+### RMSD single plots #
+#######################
+for item in bac_id:
+    j=0
+    for i in keys:
+        plt.errorbar(np.arange(0,len(bac_dict[item]['geom'][i]['0']['x_diam'][:bac_dict[item]['n'][i]]))*bac_dict[item]['maps'][i]['0']['vox'],bac_dict[item]['rmsd_avg'][i],yerr=bac_dict[item]['rmsd_std'][i],lw=2,label=i+" aa")
+        plt.plot(np.arange(0,len(bac_dict[item]['geom'][i]['0']['x_diam'][:bac_dict[item]['n'][i]]))*bac_dict[item]['maps'][i]['0']['vox'],bac_dict[item]['rmsd'][i][0][:bac_dict[item]['n'][i]],lw=2,color=kolors[j],alpha=0.3)
+        plt.plot(np.arange(0,len(bac_dict[item]['geom'][i]['1']['x_diam'][:bac_dict[item]['n'][i]]))*bac_dict[item]['maps'][i]['1']['vox'],bac_dict[item]['rmsd'][i][1][:bac_dict[item]['n'][i]],lw=2,color=kolors[j],alpha=0.3)
+        plt.plot(np.arange(0,len(bac_dict[item]['geom'][i]['2']['x_diam'][:bac_dict[item]['n'][i]]))*bac_dict[item]['maps'][i]['2']['vox'],bac_dict[item]['rmsd'][i][2][:bac_dict[item]['n'][i]],lw=2,color=kolors[j],alpha=0.3)
+        j+=1
+    plt.xlabel("Distance from the PTC along the Y-axis [A]")
+    plt.ylabel("RMSD between central paths [A]")
+    plt.title('RMSD')
+    plt.legend()
+    plt.xlim(0,120)
+    plt.ylim(0,15)
+    plt.title(bac_dict[item]['name'])
+    # Save the figure as an SVG file
+    plt.savefig(item+'/rmsd_plot.svg', format='svg')
+    plt.close()
 
-plt.xlabel("Distance from the PTC along the Y-axis [A]")
-plt.ylabel("RMSD between central paths [A]")
-plt.title('RMSD')
-plt.legend()
-plt.xlim(0,120)
-plt.ylim(0,15)
-plt.title(title)
-# Save the figure as an SVG file
+#####################
+# RMSD in omne plot #
+#####################
+plt.figure(figsize=(28,28))
+plt.tight_layout()
+k=1
+for item in bac_id:
+    j=0
+    plt.subplot(5,4,k)
+    for i in keys:
+        plt.errorbar(np.arange(0,len(bac_dict[item]['geom'][i]['0']['x_diam'][:bac_dict[item]['n'][i]]))*bac_dict[item]['maps'][i]['0']['vox'],bac_dict[item]['rmsd_avg'][i],yerr=bac_dict[item]['rmsd_std'][i],lw=2,label=i+" aa")
+        plt.plot(np.arange(0,len(bac_dict[item]['geom'][i]['0']['x_diam'][:bac_dict[item]['n'][i]]))*bac_dict[item]['maps'][i]['0']['vox'],bac_dict[item]['rmsd'][i][0][:bac_dict[item]['n'][i]],lw=2,color=kolors[j],alpha=0.3)
+        plt.plot(np.arange(0,len(bac_dict[item]['geom'][i]['1']['x_diam'][:bac_dict[item]['n'][i]]))*bac_dict[item]['maps'][i]['1']['vox'],bac_dict[item]['rmsd'][i][1][:bac_dict[item]['n'][i]],lw=2,color=kolors[j],alpha=0.3)
+        plt.plot(np.arange(0,len(bac_dict[item]['geom'][i]['2']['x_diam'][:bac_dict[item]['n'][i]]))*bac_dict[item]['maps'][i]['2']['vox'],bac_dict[item]['rmsd'][i][2][:bac_dict[item]['n'][i]],lw=2,color=kolors[j],alpha=0.3)
+        j+=1
+    plt.xlabel("Distance from the PTC along the Y-axis [A]",fontsize=14)
+    plt.ylabel("RMSD between central paths [A]",fontsize=14)
+    if (item=='4ybb'):plt.legend(fontsize=14)
+    plt.xlim(0,120)
+    plt.ylim(0,15)
+    if (item=='4ybb'):
+        plt.title('E.coli - X-ray',fontsize=18)
+    else:
+        plt.title(bac_dict[item]['name'],fontsize=18)
+    # Save the figure as an SVG file
+    k+=1
+
 plt.savefig('rmsd_plot.svg', format='svg')
 plt.close()
+
 
 # Volume
 j=0

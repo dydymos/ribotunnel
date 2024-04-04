@@ -209,7 +209,7 @@ for item in bac_id:
     j=0
     plt.subplot(5,4,k)
     for i in keys:
-        plt.errorbar(np.arange(0,len(bac_dict[item]['geom'][i]['0']['z_diam'][:bac_dict[item]['geom'][i]]))*bac_dict[item]['maps'][i]['0']['vox'],bac_dict[item]['geom_avg'][i]['vol'],yerr = bac_dict[item]['geom_std'][i]['vol'],lw=2,label=i+' aa')
+        plt.errorbar(np.arange(0,len(bac_dict[item]['geom'][i]['0']['z_diam'][:bac_dict[item]['n'][i]]))*bac_dict[item]['maps'][i]['0']['vox'],bac_dict[item]['geom_avg'][i]['vol'],yerr = bac_dict[item]['geom_std'][i]['vol'],lw=2,label=i+' aa')
         plt.plot(np.arange(0,len(bac_dict[item]['geom'][i]['0']['z_diam'][:bac_dict[item]['n'][i]]))*bac_dict[item]['maps'][i]['0']['vox'],bac_dict[item]['geom'][i]['0']['vol'][:bac_dict[item]['n'][i]],lw=2,color=kolors[j],alpha=0.3)
         plt.plot(np.arange(0,len(bac_dict[item]['geom'][i]['1']['z_diam'][:bac_dict[item]['n'][i]]))*bac_dict[item]['maps'][i]['1']['vox'],bac_dict[item]['geom'][i]['1']['vol'][:bac_dict[item]['n'][i]],lw=2,color=kolors[j],alpha=0.3)
         plt.plot(np.arange(0,len(bac_dict[item]['geom'][i]['2']['z_diam'][:bac_dict[item]['n'][i]]))*bac_dict[item]['maps'][i]['2']['vox'],bac_dict[item]['geom'][i]['2']['vol'][:bac_dict[item]['n'][i]],lw=2,color=kolors[j],alpha=0.3)
@@ -252,7 +252,7 @@ for i in keys:
 
 
 # Save the figure as an SVG file
-plt.savefig('volume_plot.svg', format='svg')
+plt.savefig('volume_plot_length.svg', format='svg')
 plt.close()
 
 ############################

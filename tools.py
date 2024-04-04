@@ -5,10 +5,11 @@ import MDAnalysis as mda
 import os
 
 # Function to derive all important parameters from the density map
+# We also normalize each map so the values are from 0 to 1.0
 def get_map_param(map_file):
     param = dict()
     map = mrcfile.open(map_file)
-    param['data'] = map.data
+    param['data'] = map.data/np.max(map.data)
     param['dim'] = np.shape(map.data)
     param['origin'] = np.array(map.header['origin'].tolist())
     param['vox'] = map.voxel_size.tolist()[0]

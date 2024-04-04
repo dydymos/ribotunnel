@@ -218,7 +218,7 @@ for item in bac_id:
     plt.ylabel("Volume of the section of the exit tunne [$A^3$]",fontsize=14)
     if (item=='4ybb'):plt.legend(fontsize=14)
     plt.xlim(0,120)
-    plt.ylim(0,2500)
+    plt.ylim(0,2250)
     if (item=='4ybb'):
         plt.title('E.coli - X-ray',fontsize=18)
     else:
@@ -246,13 +246,57 @@ for i in keys:
     plt.xlabel("Distance from the PTC along the Y-axis [A]",fontsize=14)
     plt.ylabel("Volume of the section of the exit tunne [$A^3$]",fontsize=14)
     plt.xlim(0,120)
-    plt.ylim(0,2500)
+    plt.ylim(0,2250)
     k-=1
     j+=1
 
 
 # Save the figure as an SVG file
 plt.savefig('volume_plot_length.svg', format='svg')
+plt.close()
+
+
+###########################
+# Average Volume - LENGTH #
+###########################
+plt.figure(figsize=(28,28))
+plt.tight_layout()
+k=5
+j=0
+for i in keys:
+    plt.subplot(3,2,k)
+    for item in bac_id:
+        plt.errorbar(np.arange(0,len(bac_dict[item]['geom'][i]['0']['z_diam'][:bac_dict[item]['n'][i]]))*bac_dict[item]['maps'][i]['0']['vox'],bac_dict[item]['geom_avg'][i]['vol'],yerr = bac_dict[item]['geom_std'][i]['vol'],lw=2,color=kolors[j])
+    plt.xlabel("Distance from the PTC along the Y-axis [A]",fontsize=14)
+    plt.ylabel("Volume of the section of the exit tunne [$A^3$]",fontsize=14)
+    plt.xlim(0,120)
+    plt.ylim(0,2250)
+    k-=1
+    j+=1
+
+
+# Save the figure as an SVG file
+plt.savefig('volume_avg_plot_length.svg', format='svg')
+plt.close()
+
+
+###########################
+# Average Volume - LENGTH #
+###########################
+plt.figure(figsize=(12,12))
+j=0
+for i in keys:
+    for item in bac_id:
+        plt.errorbar(np.arange(0,len(bac_dict[item]['geom'][i]['0']['z_diam'][:bac_dict[item]['n'][i]]))*bac_dict[item]['maps'][i]['0']['vox'],bac_dict[item]['geom_avg'][i]['vol'],yerr = bac_dict[item]['geom_std'][i]['vol'],lw=2,color=kolors[j])
+    plt.xlabel("Distance from the PTC along the Y-axis [A]",fontsize=14)
+    plt.ylabel("Volume of the section of the exit tunne [$A^3$]",fontsize=14)
+    plt.xlim(0,120)
+    plt.ylim(0,2250)
+    j+=1
+
+
+# Save the figure as an SVG file
+plt.savefig('volume_avg_plot_length_one.svg', format='svg')
 plt.close()
 
 ############################

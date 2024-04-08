@@ -17,9 +17,25 @@ done
 
 name='4ybb'
 for item in 10 20 30 40 60 ; do
-cd ${item}
+cd ${name}/${item}
 chimerax --nogui --cmd "open average_final_all.ccp4; save average_final_all.mrc format mrc; exit"
 chimerax --nogui --cmd "open ref_1/average_final_all.ccp4; save ref_1/average_final_all.mrc format mrc; exit"
 chimerax --nogui --cmd "open ref_2/average_final_all.ccp4; save ref_2/average_final_all.mrc format mrc; exit"
-cd ..
+cd ../..
+done
+
+for item in 10 20 30 40 60 ; do
+cd ${item}
+/home/didymos/soft/gromaps/bin/gmx  maptide -f fitted.xtc -s NC_FME_*.pdb -spacing 0.2 -margin 4.0 -mo average_final_2A << EOF
+0
+EOF
+cd ref_1
+/home/didymos/soft/gromaps/bin/gmx  maptide -f fitted.xtc -s NC_FME_*.pdb -spacing 0.2 -margin 4.0 -mo average_final_2A << EOF
+0
+EOF
+cd ../ref_2
+/home/didymos/soft/gromaps/bin/gmx  maptide -f fitted.xtc -s NC_FME_*.pdb -spacing 0.2 -margin 4.0 -mo average_final_2A << EOF
+0
+EOF
+cd ../../
 done

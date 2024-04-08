@@ -34,9 +34,9 @@ for item in bac_id:
     bac_dict[item]['maps'] = dict()
     for i in keys:
         bac_dict[item]['maps'][i] = dict()
-        bac_dict[item]['maps'][i]['0'] = get_map_param(item+'/'+i+"/average_final.mrc")
-        bac_dict[item]['maps'][i]['1'] = get_map_param(item+'/'+i+"/ref_1/average_final.mrc")
-        bac_dict[item]['maps'][i]['2'] = get_map_param(item+'/'+i+"/ref_2/average_final.mrc")
+        bac_dict[item]['maps'][i]['0'] = get_map_param(item+'/'+i+"/average_final_2A.mrc")
+        bac_dict[item]['maps'][i]['1'] = get_map_param(item+'/'+i+"/ref_1/average_final_2A.mrc")
+        bac_dict[item]['maps'][i]['2'] = get_map_param(item+'/'+i+"/ref_2/average_final_2A.mrc")
 
 
 #################

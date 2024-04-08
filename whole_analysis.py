@@ -34,16 +34,16 @@ for item in bac_id:
     bac_dict[item]['maps'] = dict()
     for i in keys:
         bac_dict[item]['maps'][i] = dict()
-        bac_dict[item]['maps'][i]['0'] = get_map_param(item+'/'+i+"/average_final_2A.mrc")
-        bac_dict[item]['maps'][i]['1'] = get_map_param(item+'/'+i+"/ref_1/average_final_2A.mrc")
-        bac_dict[item]['maps'][i]['2'] = get_map_param(item+'/'+i+"/ref_2/average_final_2A.mrc")
+        bac_dict[item]['maps'][i]['0'] = get_map_param(item+'/'+i+"/average_final.mrc")
+        bac_dict[item]['maps'][i]['1'] = get_map_param(item+'/'+i+"/ref_1/average_final.mrc")
+        bac_dict[item]['maps'][i]['2'] = get_map_param(item+'/'+i+"/ref_2/average_final.mrc")
 
 
 #################
 # The main path #
 #################
 
-epsilon = 0.001
+epsilon = 0.01
 
 # Generating the main path PDB file
 for item in bac_id:
@@ -143,7 +143,7 @@ for item in bac_id:
     plt.ylim(0,15)
     plt.title(bac_dict[item]['name'])
     # Save the figure as an SVG file
-    plt.savefig(item+'/rmsd_plot.svg', format='svg')
+    plt.savefig(item+'/rmsd_plot_0.01.svg', format='svg')
     plt.close()
 
 ############################
@@ -173,7 +173,7 @@ for item in bac_id:
     # Save the figure as an SVG file
     k+=1
 
-plt.savefig('rmsd_plot.svg', format='svg')
+plt.savefig('rmsd_plot_0.01.svg', format='svg')
 plt.close()
 
 ##########
@@ -190,11 +190,11 @@ for item in bac_id:
     plt.xlabel("Distance from the PTC along the Y-axis [A]")
     plt.ylabel("Volume of the section of the exit tunne [$A^3$]")
     plt.legend()
-    plt.xlim(0,120)
-    plt.ylim(0,2500)
+    plt.xlim(0,100)
+    plt.ylim(0,500)
     plt.title(bac_dict[item]['name'])
     # Save the figure as an SVG file
-    plt.savefig(item+'/volume_plot.svg', format='svg')
+    plt.savefig(item+'/volume_plot_0.01.svg', format='svg')
     plt.close()
 
 
@@ -217,8 +217,8 @@ for item in bac_id:
     plt.xlabel("Distance from the PTC along the Y-axis [A]",fontsize=14)
     plt.ylabel("Volume of the section of the exit tunne [$A^3$]",fontsize=14)
     if (item=='4ybb'):plt.legend(fontsize=14)
-    plt.xlim(0,120)
-    plt.ylim(0,2250)
+    plt.xlim(0,100)
+    plt.ylim(0,500)
     if (item=='4ybb'):
         plt.title('E.coli - X-ray',fontsize=18)
     else:
@@ -226,7 +226,7 @@ for item in bac_id:
     k+=1
 
 # Save the figure as an SVG file
-plt.savefig('volume_plot.svg', format='svg')
+plt.savefig('volume_plot_0.01.svg', format='svg')
 plt.close()
 
 
@@ -245,14 +245,14 @@ for i in keys:
         plt.plot(np.arange(0,len(bac_dict[item]['geom'][i]['2']['z_diam'][:bac_dict[item]['n'][i]]))*bac_dict[item]['maps'][i]['2']['vox'],bac_dict[item]['geom'][i]['2']['vol'][:bac_dict[item]['n'][i]],lw=2,color=kolors[j],alpha=0.3)
     plt.xlabel("Distance from the PTC along the Y-axis [A]",fontsize=14)
     plt.ylabel("Volume of the section of the exit tunne [$A^3$]",fontsize=14)
-    plt.xlim(0,120)
-    plt.ylim(0,2250)
+    plt.xlim(0,100)
+    plt.ylim(0,500)
     k-=1
     j+=1
 
 
 # Save the figure as an SVG file
-plt.savefig('volume_plot_length.svg', format='svg')
+plt.savefig('volume_plot_length_0.01.svg', format='svg')
 plt.close()
 
 
@@ -276,7 +276,7 @@ for i in keys:
 
 
 # Save the figure as an SVG file
-plt.savefig('volume_avg_plot_length.svg', format='svg')
+plt.savefig('volume_avg_plot_length_0.01.svg', format='svg')
 plt.close()
 
 
@@ -290,13 +290,13 @@ for i in keys:
         plt.errorbar(np.arange(0,len(bac_dict[item]['geom'][i]['0']['z_diam'][:bac_dict[item]['n'][i]]))*bac_dict[item]['maps'][i]['0']['vox'],bac_dict[item]['geom_avg'][i]['vol'],yerr = bac_dict[item]['geom_std'][i]['vol'],lw=2,color=kolors[j])
     plt.xlabel("Distance from the PTC along the Y-axis [A]",fontsize=14)
     plt.ylabel("Volume of the section of the exit tunne [$A^3$]",fontsize=14)
-    plt.xlim(0,120)
-    plt.ylim(0,2250)
+    plt.xlim(0,100)
+    plt.ylim(0,500)
     j+=1
 
 
 # Save the figure as an SVG file
-plt.savefig('volume_avg_plot_length_one.svg', format='svg')
+plt.savefig('volume_avg_plot_length_one_0.01.svg', format='svg')
 plt.close()
 
 ############################
@@ -316,7 +316,7 @@ for item in bac_id:
     plt.xlim(0,120)
     plt.ylim(0,60)
     plt.title(bac_dict[item]['name'])
-    plt.savefig(item+'/x-plot.svg', format='svg')
+    plt.savefig(item+'/x-plot_0.01.svg', format='svg')
     plt.close()
 
 
@@ -340,7 +340,7 @@ for item in bac_id:
     plt.xlabel("Distance from the PTC along the Y-axis [A]",fontsize=14)
     plt.ylabel("Distance from the main path along the X-axis [A]",fontsize=14)
     plt.xlim(0,120)
-    plt.ylim(0,65)
+    plt.ylim(0,25)
     if (item=='4ybb'):
         plt.title('E.coli - X-ray',fontsize=18)
     else:
@@ -348,7 +348,7 @@ for item in bac_id:
     k+=1
 
 # Save the figure as an SVG file
-plt.savefig('x-plot.svg', format='svg')
+plt.savefig('x-plot_0.01.svg', format='svg')
 plt.close()
 
 
@@ -372,7 +372,7 @@ for item in bac_id:
     plt.xlim(0,120)
     plt.ylim(0,60)
     plt.title(bac_dict[item]['name'])
-    plt.savefig(item+'/z-plot.svg', format='svg')
+    plt.savefig(item+'/z-plot_0.01.svg', format='svg')
     plt.close()
 
 
@@ -404,7 +404,7 @@ for item in bac_id:
     k+=1
 
 # Save the figure as an SVG file
-plt.savefig('z-plot.svg', format='svg')
+plt.savefig('z-plot_0.01.svg', format='svg')
 plt.close()
 
 #####################
@@ -426,7 +426,7 @@ for item in bac_id:
     plt.title(bac_dict[item]['name'])
     plt.legend()
     # Save the figure as an SVG file
-    plt.savefig(item+'/aspect_ratio_plot.svg', format='svg')
+    plt.savefig(item+'/aspect_ratio_plot_0.01.svg', format='svg')
     plt.close()
 
 
@@ -458,7 +458,7 @@ for item in bac_id:
     k+=1
 
 # Save the figure as an SVG file
-plt.savefig('aspect_ratio_plot.svg', format='svg')
+plt.savefig('aspect_ratio_plot_0.01.svg', format='svg')
 plt.close()
 
 

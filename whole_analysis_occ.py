@@ -28,53 +28,22 @@ for item in bac_id:
 # Getting maps #
 ################
 
-keys = ['60','40','30','20','10']
+keys = ['10']
 
 for item in bac_id:
     bac_dict[item]['maps'] = dict()
     for i in keys:
         bac_dict[item]['maps'][i] = dict()
-        bac_dict[item]['maps'][i]['0'] = get_map_param(item+'/'+i+"/average_final.mrc")
-        bac_dict[item]['maps'][i]['1'] = get_map_param(item+'/'+i+"/ref_1/average_final.mrc")
-        bac_dict[item]['maps'][i]['2'] = get_map_param(item+'/'+i+"/ref_2/average_final.mrc")
+        bac_dict[item]['maps'][i]['0'] = get_map_param(item+'/'+i+"/occupancy_map.mrc")
+        bac_dict[item]['maps'][i]['1'] = get_map_param(item+'/'+i+"/ref_1/occupancy_map.mrc")
+        bac_dict[item]['maps'][i]['2'] = get_map_param(item+'/'+i+"/ref_2/occupancy_map.mrc")
 
 
-#################
-# The main path #
-#################
 
 epsilon = 0.01
 
-# Generating the main path PDB file
-for item in bac_id:
-    for i in keys:
-        get_main_path(bac_dict[item]['maps'][i]['0'],epsilon,item+'/'+i+"/main_path.pdb")
-        get_main_path(bac_dict[item]['maps'][i]['1'],epsilon,item+'/'+i+"/ref_1/main_path.pdb")
-        get_main_path(bac_dict[item]['maps'][i]['2'],epsilon,item+'/'+i+"/ref_2/main_path.pdb")
 
-
-# Reading the main path file
-for item in bac_id:
-    bac_dict[item]['path'] = dict()
-    for i in keys:
-        bac_dict[item]['path'][i] = dict()
-        bac_dict[item]['path'][i]['0'] = mda.Universe(item+'/'+i+'/main_path.pdb')
-        bac_dict[item]['path'][i]['1'] = mda.Universe(item+'/'+i+'/ref_1/main_path.pdb')
-        bac_dict[item]['path'][i]['2'] = mda.Universe(item+'/'+i+'/ref_2/main_path.pdb')
-
-
-
-# Getting geometry
-for item in bac_id:
-    bac_dict[item]['geom'] = dict()
-    for i in keys:
-        bac_dict[item]['geom'][i] = dict()
-        bac_dict[item]['geom'][i]['0'] = geometric_prop(bac_dict[item]['maps'][i]['0'],epsilon)
-        bac_dict[item]['geom'][i]['1'] = geometric_prop(bac_dict[item]['maps'][i]['1'],epsilon)
-        bac_dict[item]['geom'][i]['2'] = geometric_prop(bac_dict[item]['maps'][i]['2'],epsilon)
-
-
-# number of atom in the main path
+# number of layers, along the Y-axis, with occupancy > epsilon
 for item in bac_id:
     bac_dict[item]['n'] = dict()
     for i in keys:

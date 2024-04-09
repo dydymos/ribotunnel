@@ -56,7 +56,7 @@ arc_id = ['hmar','pfur','saci','tkod']
 grid_resolution = 1.0  # Grid resolution in Angstroms
 trajectory_file = 'fitted.xtc'  # Change to your trajectory file path
 
-for item in ["10"]:
+for item in ["10", "20", "30", "40", "60"]:
     # Define the grid based on overall dimensions
     grid_shape = np.ceil((grid_dim_max[item] - grid_dim_min[item]) / grid_resolution).astype(int)
     # BACTERIA
@@ -93,6 +93,36 @@ for item in ["10"]:
     for name in euk_id:
         print(name)
         os.chdir(path+"eukaryota/methionine/"+name+"/"+item)
+        topology_file = 'NC_MET_'+item+'.pdb'  # Change to your topology file path
+        # Load the MD trajectory
+        u = mda.Universe(topology_file, trajectory_file)
+        # Calculate occupancy grid
+        occupancy_grid = map_traj(u,grid_shape,grid_dim_min[item],grid_resolution)
+        # Save the occupancy grid to an MRC file
+        name = "occupancy_map.mrc"
+        write_map(name,occupancy_grid,grid_resolution,grid_dim_min)
+        # REF_1
+        trajectory_file = 'ref_1/fitted.xtc'  # Change to your trajectory file path
+        # Load the MD trajectory
+        u = mda.Universe(topology_file, trajectory_file)
+        # Calculate occupancy grid
+        occupancy_grid = map_traj(u,grid_shape,grid_dim_min[item],grid_resolution)
+        # Save the occupancy grid to an MRC file
+        name = "ref_1/occupancy_map.mrc"
+        write_map(name,occupancy_grid,grid_resolution,grid_dim_min)
+        # REF_2
+        trajectory_file = 'ref_2/fitted.xtc'  # Change to your trajectory file path
+        # Load the MD trajectory
+        u = mda.Universe(topology_file, trajectory_file)
+        # Calculate occupancy grid
+        occupancy_grid = map_traj(u,grid_shape,grid_dim_min[item],grid_resolution)
+        # Save the occupancy grid to an MRC file
+        name = "ref_2/occupancy_map.mrc"
+        write_map(name,occupancy_grid,grid_resolution,grid_dim_min)
+    # ARCHAEA
+    for name in arc_id:
+        print(name)
+        os.chdir(path+"archaea/methionine/"+name+"/"+item)
         topology_file = 'NC_MET_'+item+'.pdb'  # Change to your topology file path
         # Load the MD trajectory
         u = mda.Universe(topology_file, trajectory_file)

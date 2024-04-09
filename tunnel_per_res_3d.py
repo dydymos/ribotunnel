@@ -25,6 +25,60 @@ def map_traj(u,grid_shape,grid_dim_min,grid_resolution):
     occupancy_grid /= len(u.trajectory)
     return occupancy_grid
 
+
+def map_res_traj(u,grid_resolution):
+    # Initialize dictionaries to store the overall min/max positions for each residue
+    resid_min = {r: np.inf * np.ones(3) for r in u.residues.resids}
+    resid_max = {r: -np.inf * np.ones(3) for r in u.residues.resids}
+    # Pre-select atoms for each residue to avoid redundant selections
+    residue_atoms = {r: u.select_atoms(f"resid {r} and name N CA C O") for r in u.residues.resids}
+    # Iterate through the trajectory to update the overall min/max positions
+    for ts in u.trajectory:
+        for r, atoms in residue_atoms.items():
+            positions = atoms.positions
+            resid_min[r] = np.minimum(resid_min[r], positions.min(axis=0))
+            resid_max[r] = np.maximum(resid_max[r], positions.max(axis=0))
+    # Define the grid based on overall dimensions
+    grid_shape = {r: np.ceil((resid_max[r] - resid_min[r]) / grid_resolution).astype(int) for r in u.residues.resids}
+    occupancy_grid = {r: np.zeros(grid_shape[r]) for r in u.residues.resids}
+    for ts in u.trajectory:
+        for r, atoms in residue_atoms.items():
+            # Adjust positions based on the overall grid
+            positions = (atoms.positions - resid_min[r]) / grid_resolution
+            # Convert positions to grid indices
+            indices = np.round(positions).astype(int)
+            # Ensure indices are within grid bounds
+            indices = np.clip(indices, 0, grid_shape[r] - 1)
+            # Update occupancy grid - using a set to avoid double counting in a single frame
+            unique_indices = {tuple(ind) for ind in indices}
+            for ind in unique_indices:
+                occupancy_grid[r][ind] += 1
+    for r in occupancy_grid:
+        occupancy_grid[r] /= len(u.trajectory)
+        # Find the max occupancy value and its grid indices for each residue
+        max_index = np.unravel_index(np.argmax(occupancy_grid[r]), occupancy_grid[r].shape)
+        # Convert grid indices to real-space coordinates
+        max_coords = np.array(max_index) * grid_resolution + resid_min[r]
+        print(f"Residue {r}: Max occupancy grid cell is at indices {max_index} with real-space coordinates {max_coords}")
+    return occupancy_grid
+
+##########################################
+
+    for ts in u.trajectory:
+        # Adjust positions based on the overall grid
+        positions = (u.atoms.positions - grid_dim_min) / grid_resolution
+        # Convert positions to grid indices
+        indices = np.round(positions).astype(int)
+        # Ensure indices are within grid bounds
+        indices = np.clip(indices, 0, grid_shape - 1)
+        # Update occupancy grid - using a set to avoid double counting in a single frame
+        unique_indices = {tuple(ind) for ind in indices}
+        for ind in unique_indices:
+            occupancy_grid[ind] += 1
+    occupancy_grid /= len(u.trajectory)
+    return occupancy_grid
+
+
 def write_map(name,occupancy_grid,grid_resolution,grid_dim_min):
     with mrcfile.new(name, overwrite=True) as mrc:
         mrc.set_data(occupancy_grid.T.astype(np.float32))
@@ -47,8 +101,6 @@ grid_resolution = 1.0  # Grid resolution in Angstroms
 trajectory_file = 'fitted.xtc'  # Change to your trajectory file path
 
 for item in ["10", "20", "30", "40", "60"]:
-    # Define the grid based on overall dimensions
-    grid_shape = np.ceil((grid_dim_max[item] - grid_dim_min[item]) / grid_resolution).astype(int)
     # BACTERIA
     for name in bac_id:
         print(name)

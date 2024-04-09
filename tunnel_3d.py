@@ -2,6 +2,11 @@ import MDAnalysis as mda
 import numpy as np
 import mrcfile
 
+
+#######################################################################################
+# This script takes a trajectory and convert it into 3D map that represents occupancy #
+#######################################################################################
+
 # Parameters
 trajectory_file = 'fitted.xtc'  # Change to your trajectory file path
 topology_file = 'NC_FME_40.pdb'  # Change to your topology file path

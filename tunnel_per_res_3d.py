@@ -1,6 +1,7 @@
 import MDAnalysis as mda
 import numpy as np
 import mrcfile
+import matplotlib.pyplot as plt
 from MDAnalysis.analysis import rms
 from mpl_toolkits.mplot3d import Axes3D
 from scipy.interpolate import splprep, splev
@@ -109,7 +110,7 @@ def get_tunnel_path(path_coords,item,s):
     # Fit the spline to the data points
     tck, u = splprep([x, y, z], s=s)
     # Generate new interpolated points from the spline representation
-    tunnel_path = splev(np.linspace(0, 1, int(int(item)*2.5)), tck)
+    tunnel_path = splev(np.linspace(0, 1, int(int(item)*3)), tck)
     return tunnel_path
 
 
@@ -145,6 +146,24 @@ def plot_tunnel_path(path_coords,tunnel_path):
     plt.show()
 
 
+def occupancy_edge(occupancy_map,epsilon):
+    # list of occupied cells
+    occ_indices = np.array(np.where(occupancy_map>epsilon)).T
+    vectors = []
+    for x in [-1, 0, 1]:
+        for y in [-1, 0, 1]:
+            for z in [-1, 0, 1]:
+                vectors.append((x, y, z))
+    vectors.remove((0, 0, 0))
+    edges = []
+    for indx in occ_indices:
+        # Calculate absolute indices for all neighbors
+        neighbor_indices = indx + vectors
+        # Checking how many neighbours have occupancy > epsilon
+        occupied_neighbors = np.sum(occupancy_map[tuple(neighbor_indices.T)] > epsilon)
+        if occupied_neighbors < 26:
+            edges.append(indx)
+    return np.array(edges)
 
 ################
 ################
@@ -177,6 +196,8 @@ for name in bac_id:
     bac_dict[name]['asph'] = dict()
     bac_dict[name]['tunnel'] = dict()
     bac_dict[name]['tunnel path'] = dict()
+    bac_dict[name]['tunnel interpol'] = dict()
+    bac_dict[name]['tunnel ind'] = dict()
     i+=1
 
 
@@ -191,63 +212,179 @@ for item in ["10", "20", "30", "40", "60"]:
     grid_shape = np.ceil((grid_dim_max[item] - grid_dim_min[item]) / grid_resolution).astype(int)
     # BACTERIA
     for name in bac_id:
-        print(name)
+        print(name,item)
         trajectory_file = 'fitted.xtc'  # Change to your trajectory file path
         bac_dict[name]['rmsf'][item] = dict()
         bac_dict[name]['asph'][item] = dict()
         bac_dict[name]['tunnel'][item] = dict()
-        bac_dict[name]['tunnel path'][item] = dict()
         os.chdir(path+"methionine/"+name+"/"+item)
         topology_file = 'NC_FME_'+item+'.pdb'  # Change to your topology file path
         # Load the MD trajectory
         u = mda.Universe(topology_file, trajectory_file)
-        # Calculate occupancy grid
+        # Calculate max occupancy path and residue based properties
         output_name = path+"methionine/"+name+"/"+item+"/"+"occ_path.pdb"
         rmsf,asph,tunnel = map_res_traj(u,output_name,grid_resolution)
-        tunnel_path = get_tunnel_path(tunnel,item,200)
         bac_dict[name]['rmsf'][item]['0'] = rmsf
         bac_dict[name]['asph'][item]['0'] = asph
         bac_dict[name]['tunnel'][item]['0'] = tunnel
-        bac_dict[name]['tunnel path'][item]['0'] = tunnel_path
         # REF_1
         trajectory_file = 'ref_1/fitted.xtc'  # Change to your trajectory file path
         # Load the MD trajectory
         u = mda.Universe(topology_file, trajectory_file)
-        # Calculate occupancy grid
+        # Calculate max occupancy path and residue based properties
         output_name = path+"methionine/"+name+"/"+item+"/ref_1/"+"occ_path.pdb"
         rmsf,asph,tunnel = map_res_traj(u,output_name,grid_resolution)
-        tunnel_path = get_tunnel_path(tunnel,item,200)
         bac_dict[name]['rmsf'][item]['1'] = rmsf
         bac_dict[name]['asph'][item]['1'] = asph
         bac_dict[name]['tunnel'][item]['1'] = tunnel
-        bac_dict[name]['tunnel path'][item]['1'] = tunnel_path
         # REF_2
         trajectory_file = 'ref_2/fitted.xtc'  # Change to your trajectory file path
         # Load the MD trajectory
         u = mda.Universe(topology_file, trajectory_file)
-        # Calculate occupancy grid
+        # Calculate max occupancy path and residue based properties
         output_name = path+"methionine/"+name+"/"+item+"/ref_2/"+"occ_path.pdb"
         rmsf,asph,tunnel = map_res_traj(u,output_name,grid_resolution)
-        tunnel_path = get_tunnel_path(tunnel,item,200)
         bac_dict[name]['rmsf'][item]['2'] = rmsf
         bac_dict[name]['asph'][item]['2'] = asph
         bac_dict[name]['tunnel'][item]['2'] = tunnel
-        bac_dict[name]['tunnel path'][item]['2'] = tunnel_path
 
 
 
-plt.plot(bac_dict[name]['rmsf'][item]['0'])
-plt.plot(bac_dict[name]['rmsf'][item]['1'])
-plt.plot(bac_dict[name]['rmsf'][item]['2'])
+
+# Calculate spline interpolation of the tunnel path
+s = 100
+for name in bac_id:
+    for item in ["10", "20", "30", "40", "60"]:
+        bac_dict[name]['tunnel path'][item] = dict()
+        bac_dict[name]['tunnel path'][item]['0'] = get_tunnel_path(bac_dict[name]['tunnel'][item]['0'],item,s)
+        bac_dict[name]['tunnel path'][item]['1'] = get_tunnel_path(bac_dict[name]['tunnel'][item]['1'],item,s)
+        bac_dict[name]['tunnel path'][item]['2'] = get_tunnel_path(bac_dict[name]['tunnel'][item]['2'],item,s)
+
+
+
+for name in bac_id:
+    for item in ["10", "20", "30", "40", "60"]:
+        bac_dict[name]['tunnel interpol'][item] = dict()
+        bac_dict[name]['tunnel ind'][item] = dict()
+        bac_dict[name]['tunnel ind'][item]['0'] = [np.argmin(np.sum((np.array(bac_dict[name]['tunnel path'][item]['0']).T-point)**2,1)) for point in bac_dict[name]['tunnel'][item]['0']]
+        bac_dict[name]['tunnel ind'][item]['1'] = [np.argmin(np.sum((np.array(bac_dict[name]['tunnel path'][item]['1']).T-point)**2,1)) for point in bac_dict[name]['tunnel'][item]['1']]
+        bac_dict[name]['tunnel ind'][item]['2'] = [np.argmin(np.sum((np.array(bac_dict[name]['tunnel path'][item]['2']).T-point)**2,1)) for point in bac_dict[name]['tunnel'][item]['2']]
+        bac_dict[name]['tunnel interpol'][item]['0'] = np.array(bac_dict[name]['tunnel path'][item]['0']).T[np.array(bac_dict[name]['tunnel ind'][item]['0'])]
+        bac_dict[name]['tunnel interpol'][item]['1'] = np.array(bac_dict[name]['tunnel path'][item]['1']).T[np.array(bac_dict[name]['tunnel ind'][item]['1'])]
+        bac_dict[name]['tunnel interpol'][item]['2'] = np.array(bac_dict[name]['tunnel path'][item]['2']).T[np.array(bac_dict[name]['tunnel ind'][item]['2'])]
+
+n = bac_dict[name]['tunnel ind'][item]['0'][1]
+vektor = np.array(bac_dict[name]['tunnel path'][item]['0']).T[n+1] - np.array(bac_dict[name]['tunnel path'][item]['0']).T[n-1]
+vec_from_point = edges_coord - np.array(bac_dict[name]['tunnel path'][item]['0']).T[n]
+# Calculate the dot product
+dot_products = np.dot(vec_from_point, vektor)
+# Define a small threshold
+threshold = 2  # Adjust this value based on your specific requirements
+
+# Find indices where the absolute value of the dot product is less than the threshold
+perpendicular_indices = np.where(np.abs(dot_products) < threshold)[0]
+
+# Select the edge points that are close to being perpendicular to 'vektor'
+perpendicular_edge_points = edges_coord[perpendicular_indices]
+
+atom_type = "P"
+output_name = path+"methionine/"+name+"/"+item+"/"+"occ_edge_perp.pdb"
+file = open(output_name,"w")
+for r in range(0,len(perpendicular_edge_points)):
+    file.write(pdb_format.format(r+1, atom_type, perpendicular_edge_points[r][2], perpendicular_edge_points[r][1], perpendicular_edge_points[r][0], atom_type))
+
+
+file.close()
+
+# RMSD between tunnel paths from max points
+for name in bac_id:
+    bac_dict[name]['rmsd_avg'] = dict()
+    for item in ["10", "20", "30", "40", "60"]:
+        rmsd = []
+        rmsd.append(np.sqrt(np.sum((np.array(bac_dict[name]['tunnel'][item]['0'])-np.array(bac_dict[name]['tunnel'][item]['1']))**2,1)))
+        rmsd.append(np.sqrt(np.sum((np.array(bac_dict[name]['tunnel'][item]['0'])-np.array(bac_dict[name]['tunnel'][item]['2']))**2,1)))
+        rmsd.append(np.sqrt(np.sum((np.array(bac_dict[name]['tunnel'][item]['1'])-np.array(bac_dict[name]['tunnel'][item]['2']))**2,1)))
+        bac_dict[name]['rmsd_avg'][item] = np.mean(np.array(rmsd),0)
+
+
+# RMSD between tunnel paths interpolations
+for name in bac_id:
+    bac_dict[name]['rmsd_avg_int'] = dict()
+    for item in ["10", "20", "30", "40", "60"]:
+        rmsd = []
+        rmsd.append(np.sqrt(np.sum((np.array(bac_dict[name]['tunnel path'][item]['0'])-np.array(bac_dict[name]['tunnel path'][item]['1']))**2,0)))
+        rmsd.append(np.sqrt(np.sum((np.array(bac_dict[name]['tunnel path'][item]['0'])-np.array(bac_dict[name]['tunnel path'][item]['2']))**2,0)))
+        rmsd.append(np.sqrt(np.sum((np.array(bac_dict[name]['tunnel path'][item]['1'])-np.array(bac_dict[name]['tunnel path'][item]['2']))**2,0)))
+        bac_dict[name]['rmsd_avg_int'][item] = np.mean(np.array(rmsd),0)
+
+# RMSD between tunnel paths via points interpolation
+for name in bac_id:
+    bac_dict[name]['rmsd_avg_int_point'] = dict()
+    for item in ["10", "20", "30", "40", "60"]:
+        rmsd = []
+        rmsd.append(np.sqrt(np.sum((np.array(bac_dict[name]['tunnel interpol'][item]['0'])-np.array(bac_dict[name]['tunnel interpol'][item]['1']))**2,1)))
+        rmsd.append(np.sqrt(np.sum((np.array(bac_dict[name]['tunnel interpol'][item]['0'])-np.array(bac_dict[name]['tunnel interpol'][item]['2']))**2,1)))
+        rmsd.append(np.sqrt(np.sum((np.array(bac_dict[name]['tunnel interpol'][item]['1'])-np.array(bac_dict[name]['tunnel interpol'][item]['2']))**2,1)))
+        bac_dict[name]['rmsd_avg_int_point'][item] = np.mean(np.array(rmsd),0)
+
+
+
+########### Occupancy MAP ##########
+for name in bac_id:
+    for item in ["10", "20", "30", "40", "60"]:
+
+
+
+occupancy_file = mrcfile.open(path+"methionine/"+name+"/"+item+"/occupancy_map.mrc")
+occupancy_map = occupancy_file.data
+occupancy_origin = np.array(occupancy_file.header['origin'].tolist())
+occupancy_voxel = occupancy_file.voxel_size.tolist()[0]
+
+
+# Calculating edge of the occupancy map
+edges = occupancy_edge(occupancy_map,0.001)
+edges_coord = np.array(edges)*occupancy_voxel+occupancy_origin[::-1]
+
+
+
+
+
+
+
+
+atom_type = "N"
+output_name = path+"methionine/"+name+"/"+item+"/"+"occ_edge.pdb"
+file = open(output_name,"w")
+edges_coord = np.array(edges)*occupancy_voxel+occupancy_origin[::-1]
+for r in range(0,len(edges)):
+    file.write(pdb_format.format(r+1, atom_type, edges_coord[r][2], edges_coord[r][1], edges_coord[r][0], atom_type))
+
+
+file.close()
+
+
+
+########### PLOTTING #########
+
+# RMSF plot for each residue
+plt.plot(bac_dict[name]['rmsf'][item]['0'][:-1])
+plt.plot(bac_dict[name]['rmsf'][item]['1'][:-1])
+plt.plot(bac_dict[name]['rmsf'][item]['2'][:-1])
 plt.show()
 
-plt.plot(bac_dict[name]['asph'][item]['0'])
-plt.plot(bac_dict[name]['asph'][item]['1'])
-plt.plot(bac_dict[name]['asph'][item]['2'])
+# Asphericity plot for each residue
+plt.plot(bac_dict[name]['asph'][item]['0'][:-1])
+plt.plot(bac_dict[name]['asph'][item]['1'][:-1])
+plt.plot(bac_dict[name]['asph'][item]['2'][:-1])
 plt.show()
 
 
+plt.plot(bac_dict[name]['rmsd_avg_int'][item])
+plt.plot(bac_dict[name]['rmsd_avg'][item])
+plt.plot(bac_dict[name]['rmsd_avg_int_point'][item])
 
+
+#### 3D PLOTs
 fig = plt.figure()
 path_coords = bac_dict[name]['tunnel'][item]['2']
 x = np.array(path_coords).T[0]
@@ -267,9 +404,12 @@ y_limits = [y_center - max_spread / 2, y_center + max_spread / 2]
 z_limits = [z_center - max_spread / 2, z_center + max_spread / 2]
 # Plotting
 ax = fig.add_subplot(111, projection='3d')
-ax.plot(bac_dict[name]['tunnel path'][item]['0'][0], bac_dict[name]['tunnel path'][item]['0'][1], bac_dict[name]['tunnel path'][item]['0'][2], lw=2, label='Fitted Curve at s=20')
-ax.plot(bac_dict[name]['tunnel path'][item]['1'][0], bac_dict[name]['tunnel path'][item]['1'][1], bac_dict[name]['tunnel path'][item]['1'][2], lw=2, label='Fitted Curve at s=20')
-ax.plot(bac_dict[name]['tunnel path'][item]['2'][0], bac_dict[name]['tunnel path'][item]['2'][1], bac_dict[name]['tunnel path'][item]['2'][2], lw=2, label='Fitted Curve at s=20')
+ax.scatter(np.array(bac_dict[name]['tunnel'][item]['0'])[:,0], np.array(bac_dict[name]['tunnel'][item]['0'])[:,1], np.array(bac_dict[name]['tunnel'][item]['0'])[:,2])
+ax.scatter(np.array(bac_dict[name]['tunnel'][item]['1'])[:,0], np.array(bac_dict[name]['tunnel'][item]['1'])[:,1], np.array(bac_dict[name]['tunnel'][item]['1'])[:,2])
+ax.scatter(np.array(bac_dict[name]['tunnel'][item]['2'])[:,0], np.array(bac_dict[name]['tunnel'][item]['2'])[:,1], np.array(bac_dict[name]['tunnel'][item]['2'])[:,2])
+ax.plot(bac_dict[name]['tunnel path'][item]['0'][0], bac_dict[name]['tunnel path'][item]['0'][1], bac_dict[name]['tunnel path'][item]['0'][2], lw=2, label='Fitted Curve at s='+str(s))
+ax.plot(bac_dict[name]['tunnel path'][item]['1'][0], bac_dict[name]['tunnel path'][item]['1'][1], bac_dict[name]['tunnel path'][item]['1'][2], lw=2, label='Fitted Curve at s='+str(s))
+ax.plot(bac_dict[name]['tunnel path'][item]['2'][0], bac_dict[name]['tunnel path'][item]['2'][1], bac_dict[name]['tunnel path'][item]['2'][2], lw=2, label='Fitted Curve at s='+str(s))
 # Set the calculated limits for each axis
 ax.set_xlim(x_limits)
 ax.set_ylim(y_limits)

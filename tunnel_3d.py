@@ -54,15 +54,16 @@ arc_id = ['hmar','pfur','saci','tkod']
 
 # Parameters
 grid_resolution = 1.0  # Grid resolution in Angstroms
-trajectory_file = 'fitted.xtc'  # Change to your trajectory file path
+
 
 for item in ["10", "20", "30", "40", "60"]:
     # Define the grid based on overall dimensions
     grid_shape = np.ceil((grid_dim_max[item] - grid_dim_min[item]) / grid_resolution).astype(int)
     # BACTERIA
     for name in bac_id:
-        print(name)
+        print(name,item)
         os.chdir(path+"methionine/"+name+"/"+item)
+        trajectory_file = 'fitted.xtc'  # Change to your trajectory file path
         topology_file = 'NC_FME_'+item+'.pdb'  # Change to your topology file path
         # Load the MD trajectory
         u = mda.Universe(topology_file, trajectory_file)
@@ -91,8 +92,9 @@ for item in ["10", "20", "30", "40", "60"]:
         write_map(name,occupancy_grid,grid_resolution,grid_dim_min)
     # EUKARYOTA
     for name in euk_id:
-        print(name)
+        print(name,item)
         os.chdir(path+"eukaryota/methionine/"+name+"/"+item)
+        trajectory_file = 'fitted.xtc'  # Change to your trajectory file path
         topology_file = 'NC_MET_'+item+'.pdb'  # Change to your topology file path
         # Load the MD trajectory
         u = mda.Universe(topology_file, trajectory_file)
@@ -121,8 +123,9 @@ for item in ["10", "20", "30", "40", "60"]:
         write_map(name,occupancy_grid,grid_resolution,grid_dim_min)
     # ARCHAEA
     for name in arc_id:
-        print(name)
+        print(name,item)
         os.chdir(path+"archaea/methionine/"+name+"/"+item)
+        trajectory_file = 'fitted.xtc'  # Change to your trajectory file path
         topology_file = 'NC_MET_'+item+'.pdb'  # Change to your topology file path
         # Load the MD trajectory
         u = mda.Universe(topology_file, trajectory_file)

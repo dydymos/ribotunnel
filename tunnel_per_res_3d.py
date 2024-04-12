@@ -273,13 +273,16 @@ for name in bac_id:
         bac_dict[name]['tunnel interpol'][item]['1'] = np.array(bac_dict[name]['tunnel path'][item]['1']).T[np.array(bac_dict[name]['tunnel ind'][item]['1'])]
         bac_dict[name]['tunnel interpol'][item]['2'] = np.array(bac_dict[name]['tunnel path'][item]['2']).T[np.array(bac_dict[name]['tunnel ind'][item]['2'])]
 
-n = bac_dict[name]['tunnel ind'][item]['0'][1]
+
+
+i = 37
+n = bac_dict[name]['tunnel ind'][item]['0'][i]
 vektor = np.array(bac_dict[name]['tunnel path'][item]['0']).T[n+1] - np.array(bac_dict[name]['tunnel path'][item]['0']).T[n-1]
-vec_from_point = edges_coord - np.array(bac_dict[name]['tunnel path'][item]['0']).T[n]
+vec_from_point = edges_coord - np.array(bac_dict[name]['tunnel interpol'][item]['0'])[i]
 # Calculate the dot product
 dot_products = np.dot(vec_from_point, vektor)
 # Define a small threshold
-threshold = 2  # Adjust this value based on your specific requirements
+threshold = 1  # Adjust this value based on your specific requirements
 
 # Find indices where the absolute value of the dot product is less than the threshold
 perpendicular_indices = np.where(np.abs(dot_products) < threshold)[0]
@@ -351,7 +354,7 @@ edges_coord = np.array(edges)*occupancy_voxel+occupancy_origin[::-1]
 
 
 
-
+# Writing occupancy map edges
 atom_type = "N"
 output_name = path+"methionine/"+name+"/"+item+"/"+"occ_edge.pdb"
 file = open(output_name,"w")

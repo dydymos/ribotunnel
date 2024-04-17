@@ -110,18 +110,6 @@ def get_spline_path(path_coords,item,s):
     return tunnel_path
 
 
-def get_spline_path(path_coords, item, s):
-    x, y, z = np.array(path_coords).T
-    # Assign higher weight to the last point to ensure the curve passes through it
-    weights = np.ones_like(x)
-    weights[-1] = 1000  # Increase this value as needed to ensure accuracy
-    # Fit the spline to the data points with weights
-    tck, u = splprep([x, y, z], s=s, w=weights)
-    # Generate new interpolated points from the spline representation
-    tunnel_path = splev(np.linspace(0, 1, int(int(item) * 3)), tck)
-    return tunnel_path
-
-
 def plot_tunnel_path(path_coords,tunnel_path):
     fig = plt.figure()
     x = np.array(path_coords).T[0]
@@ -204,16 +192,23 @@ for name in bac_id:
     bac_dict[name] = dict()
     bac_dict[name]['name'] = bac_name[i]
     bac_dict[name]['rmsf'] = dict()
+    bac_dict[name]['rmsd'] = dict()
     bac_dict[name]['asph'] = dict()
     bac_dict[name]['res path'] = dict()
+    bac_dict[name]['res path avg'] = dict()
     bac_dict[name]['spline path'] = dict()
+    bac_dict[name]['spline path avg'] = dict()
     bac_dict[name]['spline interpol'] = dict()
+    bac_dict[name]['spline interpol avg'] = dict()
     bac_dict[name]['spline ind'] = dict()
+    bac_dict[name]['spline ind avg'] = dict()
+    bac_dict[name]['edges coord'] = dict()
     i+=1
 
 
 # PDB format template
 pdb_format = "ATOM  {:5d}  {:<4s}MOL     1    {:8.3f}{:8.3f}{:8.3f}  1.00  0.00           {}\n"
+pdb_format_beta = "ATOM  {:5d}  {:<4s}MOL     1    {:8.3f}{:8.3f}{:8.3f}  1.00{:6.2f}           {}\n"
 atom_type = "C"
 
 # Parameters
@@ -255,64 +250,181 @@ for item in ["10", "20", "30", "40", "60"]:
         rmsf,tunnel = map_res_traj(u,output_name,grid_resolution)
         bac_dict[name]['rmsf'][item]['2'] = rmsf
         bac_dict[name]['res path'][item]['2'] = tunnel
+        # Avg position of the path
+        bac_dict[name]['res path avg'][item] = np.mean([np.array(bac_dict[name]['res path'][item]['0']),np.array(bac_dict[name]['res path'][item]['1']),np.array(bac_dict[name]['res path'][item]['2'])],0)
 
 
-
-
-# Calculate spline interpolation of the tunnel path
-s = 10 # spline value
-spline = dict()
+# Average RMSD from the main res paths
 for name in bac_id:
     for item in ["10", "20", "30", "40", "60"]:
-        spline[item] = []
-        for s in range(10,101,10):
-            bac_dict[name]['spline path'][item] = dict()
-            bac_dict[name]['spline interpol'][item] = dict()
-            bac_dict[name]['spline ind'][item] = dict()
-            bac_dict[name]['spline path'][item]['0'] = get_spline_path(bac_dict[name]['res path'][item]['0'],item,s)
-            bac_dict[name]['spline path'][item]['1'] = get_spline_path(bac_dict[name]['res path'][item]['1'],item,s)
-            bac_dict[name]['spline path'][item]['2'] = get_spline_path(bac_dict[name]['res path'][item]['2'],item,s)
-            bac_dict[name]['spline ind'][item]['0'] = [np.argmin(np.sum((np.array(bac_dict[name]['spline path'][item]['0']).T-point)**2,1)) for point in bac_dict[name]['res path'][item]['0']]
-            bac_dict[name]['spline ind'][item]['1'] = [np.argmin(np.sum((np.array(bac_dict[name]['spline path'][item]['1']).T-point)**2,1)) for point in bac_dict[name]['res path'][item]['1']]
-            bac_dict[name]['spline ind'][item]['2'] = [np.argmin(np.sum((np.array(bac_dict[name]['spline path'][item]['2']).T-point)**2,1)) for point in bac_dict[name]['res path'][item]['2']]
-            bac_dict[name]['spline interpol'][item]['0'] = np.array(bac_dict[name]['spline path'][item]['0']).T[np.array(bac_dict[name]['spline ind'][item]['0'])]
-            bac_dict[name]['spline interpol'][item]['1'] = np.array(bac_dict[name]['spline path'][item]['1']).T[np.array(bac_dict[name]['spline ind'][item]['1'])]
-            bac_dict[name]['spline interpol'][item]['2'] = np.array(bac_dict[name]['spline path'][item]['2']).T[np.array(bac_dict[name]['spline ind'][item]['2'])]
-            spline[item].append(np.sum((np.array(bac_dict[name]['res path'][item]['0'])-bac_dict[name]['spline interpol'][item]['0'])**2,1))
-
-
-for i in range(0,10):
-    plt.plot(spline["60"][i],label = str(i*10+10))
-
-plt.legend()
-plt.show()
+        rmsd = []
+        rmsd.append(np.sum((bac_dict[name]['res path avg'][item] - np.array(bac_dict[name]['res path'][item]['0']))**2,1))
+        rmsd.append(np.sum((bac_dict[name]['res path avg'][item] - np.array(bac_dict[name]['res path'][item]['1']))**2,1))
+        rmsd.append(np.sum((bac_dict[name]['res path avg'][item] - np.array(bac_dict[name]['res path'][item]['2']))**2,1))
+        bac_dict[name]['rmsd'][item] = np.mean(rmsd,0)
 
 
 
-s = 10 # spline value
-spline = dict()
+
+# Interpolation with the spline function
+s = 100 # spline value
 for name in bac_id:
     for item in ["10", "20", "30", "40", "60"]:
         bac_dict[name]['spline path'][item] = dict()
+        bac_dict[name]['spline path avg'][item] = dict()
         bac_dict[name]['spline interpol'][item] = dict()
         bac_dict[name]['spline ind'][item] = dict()
         bac_dict[name]['spline path'][item]['0'] = get_spline_path(bac_dict[name]['res path'][item]['0'],item,s)
         bac_dict[name]['spline path'][item]['1'] = get_spline_path(bac_dict[name]['res path'][item]['1'],item,s)
         bac_dict[name]['spline path'][item]['2'] = get_spline_path(bac_dict[name]['res path'][item]['2'],item,s)
+        bac_dict[name]['spline ind'][item]['0'] = [np.argmin(np.sum((np.array(bac_dict[name]['spline path'][item]['0']).T-point)**2,1)) for point in bac_dict[name]['res path'][item]['0']]
+        bac_dict[name]['spline ind'][item]['1'] = [np.argmin(np.sum((np.array(bac_dict[name]['spline path'][item]['1']).T-point)**2,1)) for point in bac_dict[name]['res path'][item]['1']]
+        bac_dict[name]['spline ind'][item]['2'] = [np.argmin(np.sum((np.array(bac_dict[name]['spline path'][item]['2']).T-point)**2,1)) for point in bac_dict[name]['res path'][item]['2']]
+        bac_dict[name]['spline interpol'][item]['0'] = np.array(bac_dict[name]['spline path'][item]['0']).T[np.array(bac_dict[name]['spline ind'][item]['0'])]
+        bac_dict[name]['spline interpol'][item]['1'] = np.array(bac_dict[name]['spline path'][item]['1']).T[np.array(bac_dict[name]['spline ind'][item]['1'])]
+        bac_dict[name]['spline interpol'][item]['2'] = np.array(bac_dict[name]['spline path'][item]['2']).T[np.array(bac_dict[name]['spline ind'][item]['2'])]
+        bac_dict[name]['spline path avg'][item] = get_spline_path(bac_dict[name]['res path avg'][item],item,s)
+        bac_dict[name]['spline ind avg'][item] = [np.argmin(np.sum((np.array(bac_dict[name]['spline path avg'][item]).T-point)**2,1)) for point in bac_dict[name]['res path avg'][item]]
+        bac_dict[name]['spline interpol avg'][item] = np.array(bac_dict[name]['spline path avg'][item]).T[np.array(bac_dict[name]['spline ind avg'][item])]
 
 
-
-
-# write tunnel path into PDB files:
+# write res path avg and its interpolation into PDB files:
 atom_type = "H"
 for name in bac_id:
     for item in ["10", "20", "30", "40", "60"]:
-        output_name = path+"methionine/"+name+"/"+item+"/"+"occ_spline.pdb"
+        output_name = path+"methionine/"+name+"/"+item+"/"+"res_path.pdb"
+        output_name2 = path+"methionine/"+name+"/"+item+"/"+"interpol_path.pdb"
+        output_name3 = path+"methionine/"+name+"/"+item+"/"+"spline_path.pdb"
         file = open(output_name,"w")
-        spline = bac_dict[name]['tunnel path'][item]['0']
+        file2 = open(output_name2,"w")
+        file3 = open(output_name3,"w")
+        pathway = bac_dict[name]['res path avg'][item]
+        interpol = bac_dict[name]['spline interpol avg'][item]
+        spline = bac_dict[name]['spline path avg'][item]
+        for r in range(0,len(pathway[:,0])):
+            file.write(pdb_format.format(r+1, atom_type, pathway[r][0], pathway[r][1], pathway[r][2], atom_type))
+            file2.write(pdb_format.format(r+1, atom_type, interpol[r][0], interpol[r][1], interpol[r][2], atom_type))
         for r in range(0,len(spline[0])):
-            file.write(pdb_format.format(r+1, atom_type, spline[0][r], spline[1][r], spline[2][r], atom_type))
+            file3.write(pdb_format.format(r+1, atom_type, spline[0][r], spline[1][r], spline[2][r], atom_type))
         file.close()
+
+
+##################
+#### 3D PLOTs ####
+##################
+fig = plt.figure()
+path_coords = bac_dict[name]['res path'][item]['2']
+x = np.array(path_coords).T[0]
+y = np.array(path_coords).T[1]
+z = np.array(path_coords).T[2]
+x_spread = x.max() - x.min()
+y_spread = y.max() - y.min()
+z_spread = z.max() - z.min()
+max_spread = max(x_spread, y_spread, z_spread)
+# Calculate the center of each dimension
+x_center = 0.5 * (x.max() + x.min())
+y_center = 0.5 * (y.max() + y.min())
+z_center = 0.5 * (z.max() + z.min())
+# Calculate the new limits for each axis, centered around the respective means
+x_limits = [x_center - max_spread / 2, x_center + max_spread / 2]
+y_limits = [y_center - max_spread / 2, y_center + max_spread / 2]
+z_limits = [z_center - max_spread / 2, z_center + max_spread / 2]
+# Plotting
+ax = fig.add_subplot(111, projection='3d')
+ax.scatter(np.array(bac_dict[name]['res path'][item]['0'])[:,0], np.array(bac_dict[name]['res path'][item]['0'])[:,1], np.array(bac_dict[name]['res path'][item]['0'])[:,2])
+ax.scatter(np.array(bac_dict[name]['res path'][item]['1'])[:,0], np.array(bac_dict[name]['res path'][item]['1'])[:,1], np.array(bac_dict[name]['res path'][item]['1'])[:,2])
+ax.scatter(np.array(bac_dict[name]['res path'][item]['2'])[:,0], np.array(bac_dict[name]['res path'][item]['2'])[:,1], np.array(bac_dict[name]['res path'][item]['2'])[:,2])
+ax.scatter(np.array(bac_dict[name]['res path avg'][item])[:,0], np.array(bac_dict[name]['res path avg'][item])[:,1], np.array(bac_dict[name]['res path avg'][item])[:,2],color="black")
+ax.plot(bac_dict[name]['spline path'][item]['0'][0], bac_dict[name]['spline path'][item]['0'][1], bac_dict[name]['spline path'][item]['0'][2], lw=2, label='Fitted Curve at s='+str(s))
+ax.plot(bac_dict[name]['spline path'][item]['1'][0], bac_dict[name]['spline path'][item]['1'][1], bac_dict[name]['spline path'][item]['1'][2], lw=2, label='Fitted Curve at s='+str(s))
+ax.plot(bac_dict[name]['spline path'][item]['2'][0], bac_dict[name]['spline path'][item]['2'][1], bac_dict[name]['spline path'][item]['2'][2], lw=2, label='Fitted Curve at s='+str(s))
+ax.plot(bac_dict[name]['spline path avg'][item][0], bac_dict[name]['spline path avg'][item][1], bac_dict[name]['spline path avg'][item][2], lw=2, color="black", label='Fitted Curve at s='+str(s))
+# Set the calculated limits for each axis
+ax.set_xlim(x_limits)
+ax.set_ylim(y_limits)
+ax.set_zlim(z_limits)
+ax.set_xlabel('X')
+ax.set_ylabel('Y')
+ax.set_zlabel('Z')
+plt.legend()
+plt.show()
+
+
+# Getting edges of the occupancy map
+# First we need to load previously calculated occupancy maps
+threshold = 0.01
+atom_type = "N"
+for name in bac_id:
+    for item in ["10", "20", "30", "40", "60"]:
+        bac_dict[name]['edges coord'][item] = dict()
+        occupancy_file = mrcfile.open(path+"methionine/"+name+"/"+item+"/occupancy_map.mrc")
+        occupancy_map = occupancy_file.data
+        occupancy_origin = np.array(occupancy_file.header['origin'].tolist())
+        occupancy_voxel = occupancy_file.voxel_size.tolist()[0]
+        # Calculating edge of the occupancy map
+        edges = occupancy_edge(occupancy_map,threshold)
+        bac_dict[name]['edges coord'][item]['0'] = np.array(edges)*occupancy_voxel+occupancy_origin[::-1]
+        # writing edges
+        output_name = path+"methionine/"+name+"/"+item+"/"+"occ_edge.pdb"
+        file = open(output_name,"w")
+        edges_coord = np.array(edges)*occupancy_voxel+occupancy_origin[::-1]
+        for r in range(0,len(edges)):
+            file.write(pdb_format.format(r+1, atom_type, edges_coord[r][2], edges_coord[r][1], edges_coord[r][0], atom_type))
+        file.close()
+        # ref_1
+        occupancy_file = mrcfile.open(path+"methionine/"+name+"/"+item+"/ref_1/occupancy_map.mrc")
+        occupancy_map = occupancy_file.data
+        # Calculating edge of the occupancy map
+        edges = occupancy_edge(occupancy_map,threshold)
+        bac_dict[name]['edges coord'][item]['1'] = np.array(edges)*occupancy_voxel+occupancy_origin[::-1]
+        # writing edges
+        output_name = path+"methionine/"+name+"/"+item+"/"+"ref_1/occ_edge.pdb"
+        file = open(output_name,"w")
+        edges_coord = np.array(edges)*occupancy_voxel+occupancy_origin[::-1]
+        for r in range(0,len(edges)):
+            file.write(pdb_format.format(r+1, atom_type, edges_coord[r][2], edges_coord[r][1], edges_coord[r][0], atom_type))
+        file.close()
+        # ref_2
+        occupancy_file = mrcfile.open(path+"methionine/"+name+"/"+item+"/ref_2/occupancy_map.mrc")
+        occupancy_map = occupancy_file.data
+        # Calculating edge of the occupancy map
+        edges = occupancy_edge(occupancy_map,threshold)
+        bac_dict[name]['edges coord'][item]['2'] = np.array(edges)*occupancy_voxel+occupancy_origin[::-1]
+        # writing edges
+        output_name = path+"methionine/"+name+"/"+item+"/"+"ref_2/occ_edge.pdb"
+        file = open(output_name,"w")
+        edges_coord = np.array(edges)*occupancy_voxel+occupancy_origin[::-1]
+        for r in range(0,len(edges)):
+            file.write(pdb_format.format(r+1, atom_type, edges_coord[r][2], edges_coord[r][1], edges_coord[r][0], atom_type))
+        file.close()
+
+
+atom_type = "P"
+n = len(bac_dict[name]['spline path avg'][item][0])
+for i in range(1,n-1):
+    vektor = np.array(bac_dict[name]['spline path avg'][item]).T[i-1] - np.array(bac_dict[name]['spline path avg'][item]).T[i]
+    vec_from_point = bac_dict[name]['edges coord'][item]['0'] - np.array(bac_dict[name]['spline path avg'][item]).T[i]
+    # Calculate the dot product
+    dot_products = np.dot(vec_from_point, vektor)
+    # Define a small threshold
+    dot_threshold = 1  # Adjust this value based on your specific requirements
+    # Find indices where the absolute value of the dot product is less than the threshold
+    perpendicular_indices = np.where(np.abs(dot_products) < dot_threshold)[0]
+    # Select the edge points that are close to being perpendicular to 'vektor'
+    perpendicular_edge_points = bac_dict[name]['edges coord'][item]['0'][perpendicular_indices]
+    # Writing a ring
+    output_name = path+"methionine/"+name+"/"+item+"/"+"ring_"+str(i)+".pdb"
+    file = open(output_name,"w")
+    for r in range(0,len(perpendicular_edge_points)):
+        file.write(pdb_format.format(r+1, atom_type, perpendicular_edge_points[r][2], perpendicular_edge_points[r][1], perpendicular_edge_points[r][0], atom_type))
+    file.close()
+    output_name = path+"methionine/"+name+"/"+item+"/"+"edge_"+str(i)+".pdb"
+    file = open(output_name,"w")
+    for r in range(0,len(bac_dict[name]['edges coord'][item]['0'])):
+        file.write(pdb_format_beta.format(r+1, atom_type, bac_dict[name]['edges coord'][item]['0'][r][2], bac_dict[name]['edges coord'][item]['0'][r][1], bac_dict[name]['edges coord'][item]['0'][r][0], np.abs(dot_products[r]),atom_type))
+    file.close()
+
+
 
 
 
@@ -365,7 +477,7 @@ for name in bac_id:
 
 # RMSD between tunnel paths via points interpolation
 for name in bac_id:
-    bac_dict[name]['rmsd_avg_int_point'] 72= dict()
+    bac_dict[name]['rmsd_avg_int_point'] = dict()
     for item in ["10", "20", "30", "40", "60"]:
         rmsd = []
         rmsd.append(np.sqrt(np.sum((np.array(bac_dict[name]['tunnel interpol'][item]['0'])-np.array(bac_dict[name]['tunnel interpol'][item]['1']))**2,1)))
@@ -431,7 +543,7 @@ plt.plot(bac_dict[name]['rmsd_avg_int_point'][item])
 
 
 
-s = 40 # spline value
+s = 20 # spline value
 spline = dict()
 for name in bac_id:
     for item in ["10", "20", "30", "40", "60"]:
@@ -441,44 +553,11 @@ for name in bac_id:
         bac_dict[name]['spline path'][item]['0'] = get_spline_path(bac_dict[name]['res path'][item]['0'],item,s)
         bac_dict[name]['spline path'][item]['1'] = get_spline_path(bac_dict[name]['res path'][item]['1'],item,s)
         bac_dict[name]['spline path'][item]['2'] = get_spline_path(bac_dict[name]['res path'][item]['2'],item,s)
+        bac_dict[name]['spline path avg'][item] = get_spline_path(bac_dict[name]['res path avg'][item],item,s)
 
 
-item = "20"
-#### 3D PLOTs
-fig = plt.figure()
-path_coords = bac_dict[name]['res path'][item]['2']
-x = np.array(path_coords).T[0]
-y = np.array(path_coords).T[1]
-z = np.array(path_coords).T[2]
-x_spread = x.max() - x.min()
-y_spread = y.max() - y.min()
-z_spread = z.max() - z.min()
-max_spread = max(x_spread, y_spread, z_spread)
-# Calculate the center of each dimension
-x_center = 0.5 * (x.max() + x.min())
-y_center = 0.5 * (y.max() + y.min())
-z_center = 0.5 * (z.max() + z.min())
-# Calculate the new limits for each axis, centered around the respective means
-x_limits = [x_center - max_spread / 2, x_center + max_spread / 2]
-y_limits = [y_center - max_spread / 2, y_center + max_spread / 2]
-z_limits = [z_center - max_spread / 2, z_center + max_spread / 2]
-# Plotting
-ax = fig.add_subplot(111, projection='3d')
-ax.scatter(np.array(bac_dict[name]['res path'][item]['0'])[:,0], np.array(bac_dict[name]['res path'][item]['0'])[:,1], np.array(bac_dict[name]['res path'][item]['0'])[:,2])
-ax.scatter(np.array(bac_dict[name]['res path'][item]['1'])[:,0], np.array(bac_dict[name]['res path'][item]['1'])[:,1], np.array(bac_dict[name]['res path'][item]['1'])[:,2])
-ax.scatter(np.array(bac_dict[name]['res path'][item]['2'])[:,0], np.array(bac_dict[name]['res path'][item]['2'])[:,1], np.array(bac_dict[name]['res path'][item]['2'])[:,2])
-ax.plot(bac_dict[name]['spline path'][item]['0'][0], bac_dict[name]['spline path'][item]['0'][1], bac_dict[name]['spline path'][item]['0'][2], lw=2, label='Fitted Curve at s='+str(s))
-ax.plot(bac_dict[name]['spline path'][item]['1'][0], bac_dict[name]['spline path'][item]['1'][1], bac_dict[name]['spline path'][item]['1'][2], lw=2, label='Fitted Curve at s='+str(s))
-ax.plot(bac_dict[name]['spline path'][item]['2'][0], bac_dict[name]['spline path'][item]['2'][1], bac_dict[name]['spline path'][item]['2'][2], lw=2, label='Fitted Curve at s='+str(s))
-# Set the calculated limits for each axis
-ax.set_xlim(x_limits)
-ax.set_ylim(y_limits)
-ax.set_zlim(z_limits)
-ax.set_xlabel('X')
-ax.set_ylabel('Y')
-ax.set_zlabel('Z')
-plt.legend()
-plt.show()
+item = "60"
+
 
 
 

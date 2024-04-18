@@ -5,6 +5,7 @@ import matplotlib.pyplot as plt
 from MDAnalysis.analysis import rms
 from mpl_toolkits.mplot3d import Axes3D
 from scipy.interpolate import splprep, splev
+from kneed import KneeLocator
 import os
 
 #######################################################################################
@@ -193,7 +194,6 @@ for name in bac_id:
     bac_dict[name]['name'] = bac_name[i]
     bac_dict[name]['rmsf'] = dict()
     bac_dict[name]['rmsd'] = dict()
-    bac_dict[name]['asph'] = dict()
     bac_dict[name]['res path'] = dict()
     bac_dict[name]['res path avg'] = dict()
     bac_dict[name]['spline path'] = dict()
@@ -203,6 +203,9 @@ for name in bac_id:
     bac_dict[name]['spline ind'] = dict()
     bac_dict[name]['spline ind avg'] = dict()
     bac_dict[name]['edges coord'] = dict()
+    bac_dict[name]['path length'] = dict()
+    bac_dict[name]['dist mean'] = dict()
+    bac_dict[name]['dist asph'] = dict()
     i+=1
 
 
@@ -267,7 +270,7 @@ for name in bac_id:
 
 
 # Interpolation with the spline function
-s = 100 # spline value
+s = 40 # spline value
 for name in bac_id:
     for item in ["10", "20", "30", "40", "60"]:
         bac_dict[name]['spline path'][item] = dict()
@@ -352,7 +355,7 @@ plt.show()
 
 # Getting edges of the occupancy map
 # First we need to load previously calculated occupancy maps
-threshold = 0.01
+threshold = 0.001
 atom_type = "N"
 for name in bac_id:
     for item in ["10", "20", "30", "40", "60"]:
@@ -363,11 +366,11 @@ for name in bac_id:
         occupancy_voxel = occupancy_file.voxel_size.tolist()[0]
         # Calculating edge of the occupancy map
         edges = occupancy_edge(occupancy_map,threshold)
-        bac_dict[name]['edges coord'][item]['0'] = np.array(edges)*occupancy_voxel+occupancy_origin[::-1]
+        edges_coord = np.array(edges)*occupancy_voxel+occupancy_origin[::-1]
+        bac_dict[name]['edges coord'][item]['0'] = np.array([edges_coord[:,2],edges_coord[:,1],edges_coord[:,0]]).T
         # writing edges
         output_name = path+"methionine/"+name+"/"+item+"/"+"occ_edge.pdb"
         file = open(output_name,"w")
-        edges_coord = np.array(edges)*occupancy_voxel+occupancy_origin[::-1]
         for r in range(0,len(edges)):
             file.write(pdb_format.format(r+1, atom_type, edges_coord[r][2], edges_coord[r][1], edges_coord[r][0], atom_type))
         file.close()
@@ -376,11 +379,11 @@ for name in bac_id:
         occupancy_map = occupancy_file.data
         # Calculating edge of the occupancy map
         edges = occupancy_edge(occupancy_map,threshold)
-        bac_dict[name]['edges coord'][item]['1'] = np.array(edges)*occupancy_voxel+occupancy_origin[::-1]
+        edges_coord = np.array(edges)*occupancy_voxel+occupancy_origin[::-1]
+        bac_dict[name]['edges coord'][item]['1'] = np.array([edges_coord[:,2],edges_coord[:,1],edges_coord[:,0]]).T
         # writing edges
         output_name = path+"methionine/"+name+"/"+item+"/"+"ref_1/occ_edge.pdb"
         file = open(output_name,"w")
-        edges_coord = np.array(edges)*occupancy_voxel+occupancy_origin[::-1]
         for r in range(0,len(edges)):
             file.write(pdb_format.format(r+1, atom_type, edges_coord[r][2], edges_coord[r][1], edges_coord[r][0], atom_type))
         file.close()
@@ -389,70 +392,124 @@ for name in bac_id:
         occupancy_map = occupancy_file.data
         # Calculating edge of the occupancy map
         edges = occupancy_edge(occupancy_map,threshold)
-        bac_dict[name]['edges coord'][item]['2'] = np.array(edges)*occupancy_voxel+occupancy_origin[::-1]
+        edges_coord = np.array(edges)*occupancy_voxel+occupancy_origin[::-1]
+        bac_dict[name]['edges coord'][item]['2'] = np.array([edges_coord[:,2],edges_coord[:,1],edges_coord[:,0]]).T
         # writing edges
         output_name = path+"methionine/"+name+"/"+item+"/"+"ref_2/occ_edge.pdb"
         file = open(output_name,"w")
-        edges_coord = np.array(edges)*occupancy_voxel+occupancy_origin[::-1]
         for r in range(0,len(edges)):
             file.write(pdb_format.format(r+1, atom_type, edges_coord[r][2], edges_coord[r][1], edges_coord[r][0], atom_type))
         file.close()
 
 
-atom_type = "P"
-n = len(bac_dict[name]['spline path avg'][item][0])
-for i in range(1,n-1):
-    vektor = np.array(bac_dict[name]['spline path avg'][item]).T[i-1] - np.array(bac_dict[name]['spline path avg'][item]).T[i]
-    vec_from_point = bac_dict[name]['edges coord'][item]['0'] - np.array(bac_dict[name]['spline path avg'][item]).T[i]
-    # Calculate the dot product
-    dot_products = np.dot(vec_from_point, vektor)
-    # Define a small threshold
-    dot_threshold = 1  # Adjust this value based on your specific requirements
-    # Find indices where the absolute value of the dot product is less than the threshold
-    perpendicular_indices = np.where(np.abs(dot_products) < dot_threshold)[0]
-    # Select the edge points that are close to being perpendicular to 'vektor'
-    perpendicular_edge_points = bac_dict[name]['edges coord'][item]['0'][perpendicular_indices]
-    # Writing a ring
-    output_name = path+"methionine/"+name+"/"+item+"/"+"ring_"+str(i)+".pdb"
-    file = open(output_name,"w")
-    for r in range(0,len(perpendicular_edge_points)):
-        file.write(pdb_format.format(r+1, atom_type, perpendicular_edge_points[r][2], perpendicular_edge_points[r][1], perpendicular_edge_points[r][0], atom_type))
-    file.close()
-    output_name = path+"methionine/"+name+"/"+item+"/"+"edge_"+str(i)+".pdb"
-    file = open(output_name,"w")
-    for r in range(0,len(bac_dict[name]['edges coord'][item]['0'])):
-        file.write(pdb_format_beta.format(r+1, atom_type, bac_dict[name]['edges coord'][item]['0'][r][2], bac_dict[name]['edges coord'][item]['0'][r][1], bac_dict[name]['edges coord'][item]['0'][r][0], np.abs(dot_products[r]),atom_type))
-    file.close()
 
+# Calculating properties along the tunnel
+# We caclulate properties along the spline and perpendicular to it
 
-
-
-
-
-
-i = 35
-n = bac_dict[name]['tunnel ind'][item]['0'][i]
-vektor = np.array(bac_dict[name]['tunnel path'][item]['0']).T[n+1] - np.array(bac_dict[name]['tunnel path'][item]['0']).T[n-1]
-vec_from_point = edges_coord - np.array(bac_dict[name]['tunnel interpol'][item]['0'])[i]
-# Calculate the dot product
-dot_products = np.dot(vec_from_point, vektor)
 # Define a small threshold
-threshold = 1  # Adjust this value based on your specific requirements
-
-# Find indices where the absolute value of the dot product is less than the threshold
-perpendicular_indices = np.where(np.abs(dot_products) < threshold)[0]
-
-# Select the edge points that are close to being perpendicular to 'vektor'
-perpendicular_edge_points = edges_coord[perpendicular_indices]
-
+dot_threshold = 0.5  # Adjust this value based on your specific requirements
 atom_type = "P"
-output_name = path+"methionine/"+name+"/"+item+"/"+"occ_edge_perp.pdb"
-file = open(output_name,"w")
-for r in range(0,len(perpendicular_edge_points)):
-    file.write(pdb_format.format(r+1, atom_type, perpendicular_edge_points[r][2], perpendicular_edge_points[r][1], perpendicular_edge_points[r][0], atom_type))
 
 
-file.close()
+for item in ["10", "20", "30", "40", "60"]:
+    # Getting tangent vectors
+    tangents = np.diff(np.array(bac_dict[name]['spline path avg'][item]).T,axis=0)
+    # normalize tangents
+    tangents_n = tangents / np.linalg.norm(tangents,axis=1)[:,np.newaxis]
+    # distance along the spline_path
+    n = np.shape(tangents)[0]
+    tangents_len = np.sqrt(np.sum(tangents**2,1))
+    path_l = np.zeros(n+1)
+    path_l[:-1] = np.cumsum(tangents_len[::-1])[::-1]
+    bac_dict[name]['path length'][item] = path_l
+    bac_dict[name]['dist mean'][item] = dict()
+    bac_dict[name]['dist asph'][item] = dict()
+    bac_dict[name]['dist mean'][item]['0'] = []
+    bac_dict[name]['dist mean'][item]['1'] = []
+    bac_dict[name]['dist mean'][item]['2'] = []
+    bac_dict[name]['dist asph'][item]['0'] = []
+    bac_dict[name]['dist asph'][item]['1'] = []
+    bac_dict[name]['dist asph'][item]['2'] = []
+    for i in range(0,n):
+        # Vector from splint to all edge points
+        spline_point = np.array(bac_dict[name]['spline path avg'][item]).T[i]
+        vec_to_edge = bac_dict[name]['edges coord'][item]['0'] - spline_point
+        # Calculate the dot product
+        dot_products = np.dot(vec_to_edge, tangents_n[i])
+        # Find indices where the absolute value of the dot product is less than the threshold
+        perpendicular_indices = np.where(np.abs(dot_products) < dot_threshold)[0]
+        # Select the edge points that are close to being perpendicular to 'vektor'
+        perpendicular_edge_points = bac_dict[name]['edges coord'][item]['0'][perpendicular_indices]
+        if (perpendicular_indices.size==0):
+            bac_dict[name]['dist mean'][item]['0'].append(np.nan)
+            bac_dict[name]['dist asph'][item]['0'].append(np.nan)
+        else:
+            dist = np.sqrt(np.sum((perpendicular_edge_points - spline_point)**2,1))
+            bac_dict[name]['dist mean'][item]['0'].append(np.mean(dist))
+            bac_dict[name]['dist asph'][item]['0'].append(np.min(dist)/np.max(dist))
+        # Writing a ring
+        output_name = path+"methionine/"+name+"/"+item+"/"+"ring_"+str(i)+".pdb"
+        file = open(output_name,"w")
+        for r in range(0,len(perpendicular_edge_points)):
+            file.write(pdb_format.format(r+1, atom_type, perpendicular_edge_points[r][0], perpendicular_edge_points[r][1], perpendicular_edge_points[r][2], atom_type))
+        file.close()
+        # ref 1
+        vec_to_edge = bac_dict[name]['edges coord'][item]['1'] - spline_point
+        # Calculate the dot product
+        dot_products = np.dot(vec_to_edge, tangents_n[i])
+        # Find indices where the absolute value of the dot product is less than the threshold
+        perpendicular_indices = np.where(np.abs(dot_products) < dot_threshold)[0]
+        # Select the edge points that are close to being perpendicular to 'vektor'
+        perpendicular_edge_points = bac_dict[name]['edges coord'][item]['1'][perpendicular_indices]
+        if (perpendicular_indices.size==0):
+            bac_dict[name]['dist mean'][item]['1'].append(np.nan)
+            bac_dict[name]['dist asph'][item]['1'].append(np.nan)
+        else:
+            dist = np.sqrt(np.sum((perpendicular_edge_points - spline_point)**2,1))
+            bac_dict[name]['dist mean'][item]['1'].append(np.mean(dist))
+            bac_dict[name]['dist asph'][item]['1'].append(np.min(dist)/np.max(dist))
+        # Writing a ring
+        output_name = path+"methionine/"+name+"/"+item+"/ref_1/"+"ring_"+str(i)+".pdb"
+        file = open(output_name,"w")
+        for r in range(0,len(perpendicular_edge_points)):
+            file.write(pdb_format.format(r+1, atom_type, perpendicular_edge_points[r][0], perpendicular_edge_points[r][1], perpendicular_edge_points[r][2], atom_type))
+        file.close()
+        # ref 2
+        vec_to_edge = bac_dict[name]['edges coord'][item]['2'] - spline_point
+        # Calculate the dot product
+        dot_products = np.dot(vec_to_edge, tangents_n[i])
+        # Find indices where the absolute value of the dot product is less than the threshold
+        perpendicular_indices = np.where(np.abs(dot_products) < dot_threshold)[0]
+        # Select the edge points that are close to being perpendicular to 'vektor'
+        perpendicular_edge_points = bac_dict[name]['edges coord'][item]['2'][perpendicular_indices]
+        if (perpendicular_indices.size==0):
+            bac_dict[name]['dist mean'][item]['2'].append(np.nan)
+            bac_dict[name]['dist asph'][item]['2'].append(np.nan)
+        else:
+            dist = np.sqrt(np.sum((perpendicular_edge_points - spline_point)**2,1))
+            bac_dict[name]['dist mean'][item]['2'].append(np.mean(dist))
+            bac_dict[name]['dist asph'][item]['2'].append(np.min(dist)/np.max(dist))
+        # Writing a ring
+        output_name = path+"methionine/"+name+"/"+item+"/ref_2/"+"ring_"+str(i)+".pdb"
+        file = open(output_name,"w")
+        for r in range(0,len(perpendicular_edge_points)):
+            file.write(pdb_format.format(r+1, atom_type, perpendicular_edge_points[r][0], perpendicular_edge_points[r][1], perpendicular_edge_points[r][2], atom_type))
+        file.close()
+
+
+
+
+
+item = "60"
+plt.plot(path_l[:-1],bac_dict[name]['dist mean'][item]['0'])
+plt.plot(path_l[:-1],bac_dict[name]['dist mean'][item]['1'])
+plt.plot(path_l[:-1],bac_dict[name]['dist mean'][item]['2'])
+plt.show()
+
+
+
+
+
 
 # RMSD between tunnel paths from max points
 for name in bac_id:

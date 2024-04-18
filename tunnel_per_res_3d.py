@@ -5,7 +5,6 @@ import matplotlib.pyplot as plt
 from MDAnalysis.analysis import rms
 from mpl_toolkits.mplot3d import Axes3D
 from scipy.interpolate import splprep, splev
-from kneed import KneeLocator
 import os
 
 #######################################################################################

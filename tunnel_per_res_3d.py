@@ -94,11 +94,11 @@ def map_res_traj(u,output_name,grid_resolution):
 
 def write_map(name,occupancy_grid,grid_resolution,grid_dim_min):
     with mrcfile.new(name, overwrite=True) as mrc:
-        mrc.set_data(occupancy_grid.T.astype(np.float32))
+        mrc.set_data(occupancy_grid.astype(np.float32))
         mrc.voxel_size = grid_resolution
-        mrc.header.origin.x = grid_dim_min[item][0]
-        mrc.header.origin.y = grid_dim_min[item][1]
-        mrc.header.origin.z = grid_dim_min[item][2]
+        mrc.header.origin.x = grid_dim_min[0]
+        mrc.header.origin.y = grid_dim_min[1]
+        mrc.header.origin.z = grid_dim_min[2]
 
 
 def get_spline_path(path_coords,item,s):
@@ -185,7 +185,9 @@ arc_id = ['hmar','pfur','saci','tkod']
 
 bac_name = ['E.coli','A.baumannii','B.burgdorferi','B.subtilis','C.acnes','D.radiodurans','E.coli','E.faecalis','F.johnsoniae','L.innocua','L.lactis','L.monocytogenes','M.pneumoniae','M.smegmatis','M.tuberculosis','P.aeruginosa','P.urativorans','S.aureus','T.thermophilus']
 
-# Generating main dictionary
+##############################
+# Generating main dictionary #
+##############################
 bac_dict = dict()
 i=0
 for name in bac_id:
@@ -193,6 +195,7 @@ for name in bac_id:
     bac_dict[name]['name'] = bac_name[i]
     bac_dict[name]['rmsf'] = dict()
     bac_dict[name]['rmsd'] = dict()
+    bac_dict[name]['occupancy map avg'] = dict()
     bac_dict[name]['res path'] = dict()
     bac_dict[name]['res path avg'] = dict()
     bac_dict[name]['spline path'] = dict()
@@ -202,9 +205,12 @@ for name in bac_id:
     bac_dict[name]['spline ind'] = dict()
     bac_dict[name]['spline ind avg'] = dict()
     bac_dict[name]['edges coord'] = dict()
+    bac_dict[name]['edges coord avg'] = dict()
     bac_dict[name]['path length'] = dict()
     bac_dict[name]['dist mean'] = dict()
     bac_dict[name]['dist asph'] = dict()
+    bac_dict[name]['dist mean avg'] = dict()
+    bac_dict[name]['dist asph avg'] = dict()
     i+=1
 
 
@@ -216,7 +222,9 @@ atom_type = "C"
 # Parameters
 grid_resolution = 1.0  # Grid resolution in Angstroms
 
-# Generating occupancy pathway
+#################################################
+# Generating occupancy pathway for each residue #
+#################################################
 for item in ["10", "20", "30", "40", "60"]:
     grid_shape = np.ceil((grid_dim_max[item] - grid_dim_min[item]) / grid_resolution).astype(int)
     # BACTERIA
@@ -255,8 +263,9 @@ for item in ["10", "20", "30", "40", "60"]:
         # Avg position of the path
         bac_dict[name]['res path avg'][item] = np.mean([np.array(bac_dict[name]['res path'][item]['0']),np.array(bac_dict[name]['res path'][item]['1']),np.array(bac_dict[name]['res path'][item]['2'])],0)
 
-
-# Average RMSD from the main res paths
+########################################
+# Average RMSD from the main res paths #
+########################################
 for name in bac_id:
     for item in ["10", "20", "30", "40", "60"]:
         rmsd = []
@@ -266,9 +275,19 @@ for name in bac_id:
         bac_dict[name]['rmsd'][item] = np.mean(rmsd,0)
 
 
+# Plot RMSD for paths at long length
+item = "60"
+for name in bac_id:
+    plt.plot(np.arange(1,61),bac_dict[name]['rmsd'][item],'o-',ms=4)
 
+plt.axvline(x=20,color='black',ls='--')
+plt.show()
 
-# Interpolation with the spline function
+NN = 20
+
+##########################################
+# Interpolation with the spline function #
+##########################################
 s = 40 # spline value
 for name in bac_id:
     for item in ["10", "20", "30", "40", "60"]:
@@ -285,9 +304,14 @@ for name in bac_id:
         bac_dict[name]['spline interpol'][item]['0'] = np.array(bac_dict[name]['spline path'][item]['0']).T[np.array(bac_dict[name]['spline ind'][item]['0'])]
         bac_dict[name]['spline interpol'][item]['1'] = np.array(bac_dict[name]['spline path'][item]['1']).T[np.array(bac_dict[name]['spline ind'][item]['1'])]
         bac_dict[name]['spline interpol'][item]['2'] = np.array(bac_dict[name]['spline path'][item]['2']).T[np.array(bac_dict[name]['spline ind'][item]['2'])]
-        bac_dict[name]['spline path avg'][item] = get_spline_path(bac_dict[name]['res path avg'][item],item,s)
-        bac_dict[name]['spline ind avg'][item] = [np.argmin(np.sum((np.array(bac_dict[name]['spline path avg'][item]).T-point)**2,1)) for point in bac_dict[name]['res path avg'][item]]
-        bac_dict[name]['spline interpol avg'][item] = np.array(bac_dict[name]['spline path avg'][item]).T[np.array(bac_dict[name]['spline ind avg'][item])]
+        if  (item=="60"):
+            bac_dict[name]['spline path avg'][item] = get_spline_path(bac_dict[name]['res path avg'][item][20:],item,s)
+            bac_dict[name]['spline ind avg'][item] = [np.argmin(np.sum((np.array(bac_dict[name]['spline path avg'][item]).T-point)**2,1)) for point in bac_dict[name]['res path avg'][item][20:]]
+            bac_dict[name]['spline interpol avg'][item] = np.array(bac_dict[name]['spline path avg'][item]).T[np.array(bac_dict[name]['spline ind avg'][item])]
+        else:
+            bac_dict[name]['spline path avg'][item] = get_spline_path(bac_dict[name]['res path avg'][item],item,s)
+            bac_dict[name]['spline ind avg'][item] = [np.argmin(np.sum((np.array(bac_dict[name]['spline path avg'][item]).T-point)**2,1)) for point in bac_dict[name]['res path avg'][item]]
+            bac_dict[name]['spline interpol avg'][item] = np.array(bac_dict[name]['spline path avg'][item]).T[np.array(bac_dict[name]['spline ind avg'][item])]
 
 
 # write res path avg and its interpolation into PDB files:
@@ -300,7 +324,10 @@ for name in bac_id:
         file = open(output_name,"w")
         file2 = open(output_name2,"w")
         file3 = open(output_name3,"w")
-        pathway = bac_dict[name]['res path avg'][item]
+        if (item=="60"):
+            pathway = bac_dict[name]['res path avg'][item][20:]
+        else:
+            pathway = bac_dict[name]['res path avg'][item]
         interpol = bac_dict[name]['spline interpol avg'][item]
         spline = bac_dict[name]['spline path avg'][item]
         for r in range(0,len(pathway[:,0])):
@@ -352,8 +379,11 @@ plt.legend()
 plt.show()
 
 
-# Getting edges of the occupancy map
-# First we need to load previously calculated occupancy maps
+###############################################################
+# Getting edges of the occupancy maps                         #
+# Generating average occupancy map and corresponding edges.   #
+# First we need to load previously calculated occupancy maps  #
+###############################################################
 threshold = 0.001
 atom_type = "N"
 for name in bac_id:
@@ -363,6 +393,7 @@ for name in bac_id:
         occupancy_map = occupancy_file.data
         occupancy_origin = np.array(occupancy_file.header['origin'].tolist())
         occupancy_voxel = occupancy_file.voxel_size.tolist()[0]
+        bac_dict[name]['occupancy map avg'] = np.copy(occupancy_map)
         # Calculating edge of the occupancy map
         edges = occupancy_edge(occupancy_map,threshold)
         edges_coord = np.array(edges)*occupancy_voxel+occupancy_origin[::-1]
@@ -376,6 +407,7 @@ for name in bac_id:
         # ref_1
         occupancy_file = mrcfile.open(path+"methionine/"+name+"/"+item+"/ref_1/occupancy_map.mrc")
         occupancy_map = occupancy_file.data
+        bac_dict[name]['occupancy map avg'] += occupancy_map
         # Calculating edge of the occupancy map
         edges = occupancy_edge(occupancy_map,threshold)
         edges_coord = np.array(edges)*occupancy_voxel+occupancy_origin[::-1]
@@ -389,6 +421,8 @@ for name in bac_id:
         # ref_2
         occupancy_file = mrcfile.open(path+"methionine/"+name+"/"+item+"/ref_2/occupancy_map.mrc")
         occupancy_map = occupancy_file.data
+        bac_dict[name]['occupancy map avg'] += occupancy_map
+        bac_dict[name]['occupancy map avg'] /= 3
         # Calculating edge of the occupancy map
         edges = occupancy_edge(occupancy_map,threshold)
         edges_coord = np.array(edges)*occupancy_voxel+occupancy_origin[::-1]
@@ -399,17 +433,95 @@ for name in bac_id:
         for r in range(0,len(edges)):
             file.write(pdb_format.format(r+1, atom_type, edges_coord[r][2], edges_coord[r][1], edges_coord[r][0], atom_type))
         file.close()
+        # Calculating edge of the averaged occupancy map
+        edges = occupancy_edge(bac_dict[name]['occupancy map avg'],threshold)
+        edges_coord = np.array(edges)*occupancy_voxel+occupancy_origin[::-1]
+        bac_dict[name]['edges coord avg'][item] = np.array([edges_coord[:,2],edges_coord[:,1],edges_coord[:,0]]).T
+        # writing averaged edges
+        output_name = path+"methionine/"+name+"/"+item+"/"+"/occ_edge_avg.pdb"
+        file = open(output_name,"w")
+        for r in range(0,len(edges)):
+            file.write(pdb_format.format(r+1, atom_type, edges_coord[r][2], edges_coord[r][1], edges_coord[r][0], atom_type))
+        file.close()
+        # writing averaged map
+        output_name = path+"methionine/"+name+"/"+item+"/"+"/occupancy_map_avg.mrc"
+        write_map(output_name,bac_dict[name]['occupancy map avg'],grid_resolution,grid_dim_min[item])
 
 
-
-# Calculating properties along the tunnel
-# We caclulate properties along the spline and perpendicular to it
+####################################################################
+# Calculating properties along the tunnel                          #
+# We caclulate properties along the spline and perpendicular to it #
+####################################################################
 
 # Define a small threshold
 dot_threshold = 0.5  # Adjust this value based on your specific requirements
 atom_type = "P"
 
+# Calculations for average map
+for name in bac_id:
+    for item in ["10", "20", "30", "40", "60"]:
+        # Getting tangent vectors
+        tangents = np.diff(np.array(bac_dict[name]['spline path avg'][item]).T,axis=0)
+        # normalize tangents
+        tangents_n = tangents / np.linalg.norm(tangents,axis=1)[:,np.newaxis]
+        # distance along the spline_path
+        n = np.shape(tangents)[0]
+        tangents_len = np.sqrt(np.sum(tangents**2,1))
+        path_l = np.zeros(n+1)
+        path_l[:-1] = np.cumsum(tangents_len[::-1])[::-1]
+        bac_dict[name]['path length'][item] = path_l
+        bac_dict[name]['dist mean avg'][item] = []
+        bac_dict[name]['dist asph avg'][item] = []
+        for i in range(0,n):
+            # Vector from splint to all edge points
+            spline_point = np.array(bac_dict[name]['spline path avg'][item]).T[i]
+            vec_to_edge = bac_dict[name]['edges coord avg'][item] - spline_point
+            # Calculate the dot product
+            dot_products = np.dot(vec_to_edge, tangents_n[i])
+            # Find indices where the absolute value of the dot product is less than the threshold
+            perpendicular_indices = np.where(np.abs(dot_products) < dot_threshold)[0]
+            # Select the edge points that are close to being perpendicular to 'vektor'
+            perpendicular_edge_points = bac_dict[name]['edges coord avg'][item][perpendicular_indices]
+            if (perpendicular_indices.size==0):
+                bac_dict[name]['dist mean avg'][item].append(np.nan)
+                bac_dict[name]['dist asph avg'][item].append(np.nan)
+            else:
+                dist = np.sqrt(np.sum((perpendicular_edge_points - spline_point)**2,1))
+                bac_dict[name]['dist mean avg'][item].append(np.mean(dist))
+                bac_dict[name]['dist asph avg'][item].append(np.min(dist)/np.max(dist))
+                # Writing a ring
+            output_name = path+"methionine/"+name+"/"+item+"/"+"ring_avg_"+str(i)+".pdb"
+            file = open(output_name,"w")
+            for r in range(0,len(perpendicular_edge_points)):
+                file.write(pdb_format.format(r+1, atom_type, perpendicular_edge_points[r][0], perpendicular_edge_points[r][1], perpendicular_edge_points[r][2], atom_type))
+            file.close()
 
+
+
+kolors = ['C0','C1','C2','C3','C4']
+
+# Plot mean width
+j = 0
+for item in ["10", "20", "30", "40","60"]:
+    for name in bac_id:
+        plt.plot(bac_dict[name]['path length'][item][:-8],bac_dict[name]['dist mean avg'][item][:-7],color=kolors[j])
+    j+=1
+
+plt.xlim(0,100)
+plt.show()
+
+# Plot ASPHERICITY
+j = 0
+for item in ["10", "20", "30", "40","60"]:
+    for name in bac_id:
+        plt.plot(bac_dict[name]['path length'][item][:-8],bac_dict[name]['dist asph avg'][item][:-7],color=kolors[j])
+    j+=1
+
+plt.xlim(0,100)
+plt.show()
+
+######################################################################################
+# Calculations for each map separately
 for item in ["10", "20", "30", "40", "60"]:
     # Getting tangent vectors
     tangents = np.diff(np.array(bac_dict[name]['spline path avg'][item]).T,axis=0)
